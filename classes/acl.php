@@ -13,6 +13,11 @@ class ACL {
 
 		return self::$_instance;
 	}
+	
+	public static function rule()
+	{
+		return new ACL_Rule;
+	}
 
 	public static function request_parts()
 	{
@@ -42,15 +47,17 @@ class ACL {
 
 
 
-	protected $user;
+	protected $user = NULL;
 	
-	protected $ruleset;
+	protected $request = NULL;
+	
+	protected $ruleset = NULL;
 
 	protected function __construct()
 	{
 		// Set the member variables
 		$this->user    = Auth::instance()->get_user() ?: ORM::factory('user');
-		$this->ruleset = ACL_Ruleset::factory();
+		$this->ruleset = ACL_Ruleset::create();
 	}
 
 	public function add_rule(ACL_Rule $rule)
@@ -58,27 +65,6 @@ class ACL {
 		// Add rule to ruleset
 		$this->ruleset->add($rule);
 
-		return $this;
-	}
-	
-	public function import_rules($file = NULL)
-	{
-		// If no file, use the default
-		if ( ! $file)
-		{
-			$file =  APPPATH.'acl'.EXT;
-		}
-		
-		// If relative path used, prepend with APPPATH
-		if (strpos($file, APPPATH) !== 0)
-		{
-			$file =  APPPATH.ltrim($file, '/');
-		}
-		
-		// Include the file of ACL rules
-		$acl = $this;
-		require $file;
-		
 		return $this;
 	}
 

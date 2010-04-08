@@ -5,6 +5,8 @@ return array
 	'public_role'      => 'public',
 
 	'super_role'       => 'developer',
+	
+	'auto_format'      => '{action}-{controller}',
 
 	'default_callback' => array
 	(

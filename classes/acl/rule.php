@@ -4,13 +4,6 @@ class ACL_Rule {
 
 	const CALLBACK_DEFAULT = '<<default>>';
 
-	protected static function factory()
-	{
-		return new self;
-	}
-	
-
-
 	protected $directory = '';
 
 	protected $controller = '';
@@ -44,15 +37,35 @@ class ACL_Rule {
 		return $this;
 	}
 	
-	public function for_current()
+	public function for_current_directory()
 	{
 		// Get the request parts
 		$parts = ACL::request_parts();
 
-		// Setup rule from parts
-		$this->for_directory($parts['directory'])
-			->for_controller($parts['controller'])
-		    ->for_action($parts['action']);
+		// Add current directory
+		$this->for_directory($parts['directory']);
+			
+		return $this;
+	}
+	
+	public function for_current_controller()
+	{
+		// Get the request parts
+		$parts = ACL::request_parts();
+
+		// Add current controller
+		$this->for_controller($parts['controller']);
+			
+		return $this;
+	}
+	
+	public function for_current_action()
+	{
+		// Get the request parts
+		$parts = ACL::request_parts();
+
+		// Add current action
+		$this->for_action($parts['action']);
 			
 		return $this;
 	}
@@ -98,7 +111,11 @@ class ACL_Rule {
 			return $this;
 	
 		// Get capability associated with this request
-		$name = strtolower($this->action.'-'.$this->controller);
+		$name = strtolower(str_ireplace(
+			array('{controller}', '{action}'), 
+			array($this->controller, $this->action), 
+			Kohana::config('acl.auto_format')
+		));
 		$capability = ORM::factory('capability', array('name' => $name));
 
 		// If capability does not exist, throw exception

@@ -2,13 +2,13 @@
 
 class ACL_Ruleset {
 
-	protected static function factory()
+	protected static function create()
 	{
 		// Create the ruleset
 		$ruleset = new self;
 		
 		// Create a default rule
-		$default_rule = ACL_Rule::factory();
+		$default_rule = ACL::rule();
 
 		// Set the callback for the default rule
 		if ($callback = Kohana::config('acl.default_callback'))
