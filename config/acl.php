@@ -2,13 +2,13 @@
 
 return array
 (
-	'public_role'      => 'public',
+	'public_role'          => 'guest',
 
-	'super_role'       => 'developer',
+	'super_role'           => 'developer',
 	
-	'auto_format'      => '{action}-{controller}',
+	'auto_format'          => '{action}-{controller}',
 
-	'default_callback' => array
+	'default_callback'     => array
 	(
 		'function' => NULL,
 		'args'     => array(),

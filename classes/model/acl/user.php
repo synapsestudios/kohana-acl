@@ -13,6 +13,12 @@ class Model_Acl_User extends Model_Auth_User {
 	
 	// ACL-related methods
 
+	/**
+	 * xx
+	 *
+	 * @param   type  xx
+	 * @return  type
+	 */
 	public function is_a($role)
 	{
 		// Get role object
@@ -23,12 +29,18 @@ class Model_Acl_User extends Model_Auth_User {
 		
 		// If object failed to load then throw exception
 		if ( ! $role->loaded())
-			throw new Exception('Tried to check for a role that did not exist.');
+			throw new ACL_Exception('Tried to check for a role that did not exist.');
 
 		// Return whether or not they have the role
 		return $user->has('role', $role);
 	}
 
+	/**
+	 * xx
+	 *
+	 * @param   type  xx
+	 * @return  type
+	 */
 	public function can($capability)
 	{
 		// If the user has the super role, they can!
@@ -50,6 +62,12 @@ class Model_Acl_User extends Model_Auth_User {
 		return $user->has('capability', $capability);
 	}
 
+	/**
+	 * xx
+	 *
+	 * @param   type  xx
+	 * @return  type
+	 */
 	public function roles_list($reload = FALSE)
 	{
 		static $roles = array();
@@ -74,6 +92,12 @@ class Model_Acl_User extends Model_Auth_User {
 		return $roles;
 	}
 
+	/**
+	 * xx
+	 *
+	 * @param   type  xx
+	 * @return  type
+	 */
 	public function capabilties_list($reload = FALSE)
 	{
 		static $capabilties = array();

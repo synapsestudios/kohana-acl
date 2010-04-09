@@ -1,35 +1,28 @@
 <?php defined('SYSPATH') OR die('No direct access allowed.');
 // EXAMPLES:
 
-$acl = ACL::instance();
-
-// admin/*/*
-$acl->add_rule(ACL::rule()
+// For admin/*/* allow only role "admin"
+ACL::add_rule(ACL::rule()
 	->for_directory('admin')
 	->allow_role('admin')
 );
 
-// -/user/{current}
-$acl->add_rule(ACL::rule()
+// For -/user/{current_action} allow capability "{current_action}_user"
+ACL::add_rule(ACL::rule()
 	->for_controller('user')
 	->for_current_action()
 	->allow_auto()
 );
 
-// -/user/delete
-$acl->add_rule(ACL::rule()
+// For -/user/delete allow capability "delete_user"
+ACL::add_rule(ACL::rule()
 	->for_controller('user')
 	->for_action('delete')
 	->allow_capability('delete-user')
 );
 
-// -/public/*
-$acl->add_rule(ACL::rule()
-	->for_controller('public')
-	->allow_all()
-);
-
-$acl->add_rule(ACL::rule()
+// For -/public/* allow all roles
+ACL::add_rule(ACL::rule()
 	->for_controller('public')
 	->allow_all()
 );
