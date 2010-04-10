@@ -31,7 +31,7 @@ class Kohana_ACL {
 	public static function instance(Request $request = NULL)
 	{
 		// Set the default rule when creating the first instance
-		if (empty(self::$_rules))
+		if ( ! isset(self::$_rules[ACL::KEY_SEPARATOR.ACL::KEY_SEPARATOR]))
 		{
 			// Create a default rule
 			$default_rule = ACL::rule();
@@ -56,7 +56,7 @@ class Kohana_ACL {
 		$key = ACL::key($request->directory, $request->controller, $request->action);
 
 		// Register the instance if it doesn't exist
-		if (is_null(self::$_instances[$key]))
+		if ( ! isset(self::$_instances[$key]))
 		{
 			self::$_instances[$key] = new self($request);
 		}
@@ -268,12 +268,16 @@ class Kohana_ACL {
 	 */
 	protected function user_authorized()
 	{
-		// Compile the ruleset
+		// Compile the rules
 		$this->compile();
+
+		//echo '<b>Compiled Rule:</b>'.Kohana::debug($this->rule);
+		//echo '<b>Request:</b>'.Kohana::debug($this->scope());
+		//echo '<b>User:</b>'.Kohana::debug($this->user->roles_list());
 
 		// If the user has the super role, then allow access
 		$super_role = Kohana::config('acl.super_role');
-		if ($super_role AND in_array($super_role, $user->roles_list()))
+		if ($super_role AND in_array($super_role, $this->user->roles_list()))
 			return TRUE;
 
 		// If the user is in the user list, then allow access
@@ -281,15 +285,15 @@ class Kohana_ACL {
 			return TRUE;
 
 		// If the user has all (AND) the capabilities, then allow access
-		$difference = array_diff($this->rule['capabilities'], $user->capabilties_list());
-		if (empty($difference))
+		$difference = array_diff($this->rule['capabilities'], $this->user->capabilities_list());
+		if ( ! empty($this->rule['capabilities']) AND empty($difference))
 			return TRUE;
 
 		// If there were no capabilities allowed, check the roles
 		if (empty($this->rule['capabilities']))
 		{
 			// If the user has one (OR) the roles, then allow access
-			$intersection = array_intersect($this->rule['roles'], $user->roles_list());
+			$intersection = array_intersect($this->rule['roles'], $this->user->roles_list());
 			if ( ! empty($intersection))
 				return TRUE;
 		}
@@ -303,13 +307,13 @@ class Kohana_ACL {
 	 * @param   type  xx
 	 * @return  type
 	 */
-	protected function perform_callback(Model_User $user)
+	protected function perform_callback()
 	{
 		// Loop through the callbacks
 		foreach ($this->rule['callbacks'] as $role => $callback)
 		{
 			// If the user matches the role (or it's a default), execute it
-			if ($user->is_a($role) OR $role === ACL::CALLBACK_DEFAULT)
+			if ($this->user->is_a($role) OR $role === ACL::CALLBACK_DEFAULT)
 			{
 				call_user_func_array($callback['function'], $callback['args']);
 				return;
@@ -328,25 +332,32 @@ class Kohana_ACL {
 		$applicable_rules = array();
 		$scope = $this->scope();
 
+		//echo '<b>Rules:</b>'.Kohana::debug(self::$_rules);
+
 		ACL::resolve_rules($scope);
 
+		//echo '<b>Resolved Rules:</b>'.Kohana::debug(self::$_rules);
+
 		// Get all the rules that could apply to this request
-		while ( ! empty($scope))
+		foreach ($scope as & $value)
 		{
 			$key = ACL::key($scope);
+			
 			if ($rule = Arr::get(self::$_rules, $key, FALSE))
 			{
-				$applicable_rules[] = $rule;
+				$applicable_rules[$key] = $rule;
 			}
 
-			array_pop($scope);
+			$value = '';
 		}
-
+		
 		// Get default rule
-		$applicable_rules[] = Arr::get($this->rules, ACL::KEY_SEPARATOR.ACL::KEY_SEPARATOR);
+		$default_key = ACL::KEY_SEPARATOR.ACL::KEY_SEPARATOR;
+		$applicable_rules[$default_key] = Arr::get(self::$_rules, $default_key);
 
-		// Reverse the rules. Start with the default and go up
+		// Reverse the rules. Compile from the bottom up
 		$applicable_rules = array_reverse($applicable_rules);
+
 
 		// Compile the rule
 		foreach ($applicable_rules as $rule)

@@ -252,7 +252,8 @@ class Kohana_ACL_Rule {
 
 		// If capability does not exist, throw exception
 		if ( ! $capability->loaded())
-			throw new ACL_Exception('The capability :name does not exist.', array(':name' => 'name'));
+			return $this;
+			//throw new ACL_Exception('The capability :name does not exist.', array(':name' => $name));
 
 		// Allow the capability
 		$this->allow_capability($capability->name);

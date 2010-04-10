@@ -6,7 +6,7 @@ class Model_Acl_Role extends Model_Auth_Role {
 	
 	protected $_has_many = array
 	(
-		'users'        => array('model' => 'role', 'through' => 'roles_users'),
+		'users'        => array('model' => 'user', 'through' => 'roles_users'),
 		'capabilities' => array('model' => 'capability'),
 	);
 
