@@ -9,50 +9,50 @@
 class Kohana_ACL_Rule {
 
 	/**
-	 * @var  type  xx
+	 * @var  boolean  Auto mode is `TRUE` when the `auto_allow` method is run
 	 */
 	public $auto_mode       = FALSE;
 
 	/**
-	 * @var  type  xx
+	 * @var  string  The requested directory
 	 */
 	protected $directory    = '';
 
 	/**
-	 * @var  type  xx
+	 * @var  string  The requested controller
 	 */
 	protected $controller   = '';
 
 	/**
-	 * @var  type  xx
+	 * @var  string  The requested action
 	 */
 	protected $action       = '';
 
 	/**
-	 * @var  type  xx
+	 * @var  array  An array of all added roles
 	 */
 	protected $roles        = array();
 
 	/**
-	 * @var  type  xx
+	 * @var  array  An array of all added capabilities
 	 */
 	protected $capabilities = array();
 
 	/**
-	 * @var  type  xx
+	 * @var  array  An array of all added users
 	 */
 	protected $users        = array();
 
 	/**
-	 * @var  type  xx
+	 * @var  array  An array of all added callbacks
 	 */
 	protected $callbacks    = array();
 
 	/**
-	 * xx
+	 * Sets the directory for which the rule applies
 	 *
-	 * @param   type  xx
-	 * @return  type
+	 * @param   string  The directory name
+	 * @return  ACL_Rule
 	 */
 	public function for_directory($directory)
 	{
@@ -62,10 +62,10 @@ class Kohana_ACL_Rule {
 	}
 
 	/**
-	 * xx
+	 * Sets the controller for which the rule applies
 	 *
-	 * @param   type  xx
-	 * @return  type
+	 * @param   string  The controller name
+	 * @return  ACL_Rule
 	 */
 	public function for_controller($controller)
 	{
@@ -75,10 +75,10 @@ class Kohana_ACL_Rule {
 	}
 
 	/**
-	 * xx
+	 * Sets the action for which the rule applies
 	 *
-	 * @param   type  xx
-	 * @return  type
+	 * @param   string  The action name
+	 * @return  ACL_Rule
 	 */
 	public function for_action($action)
 	{
@@ -88,10 +88,9 @@ class Kohana_ACL_Rule {
 	}
 
 	/**
-	 * xx
+	 * Sets the directory to resolve later to the current request's
 	 *
-	 * @param   type  xx
-	 * @return  type
+	 * @return  ACL_Rule
 	 */
 	public function for_current_directory()
 	{
@@ -101,10 +100,9 @@ class Kohana_ACL_Rule {
 	}
 
 	/**
-	 * xx
+	 * Sets the controller to resolve later to the current request's
 	 *
-	 * @param   type  xx
-	 * @return  type
+	 * @return  ACL_Rule
 	 */
 	public function for_current_controller()
 	{
@@ -114,10 +112,9 @@ class Kohana_ACL_Rule {
 	}
 
 	/**
-	 * xx
+	 * Sets the action to resolve later to the current request's
 	 *
-	 * @param   type  xx
-	 * @return  type
+	 * @return  ACL_Rule
 	 */
 	public function for_current_action()
 	{
@@ -127,10 +124,9 @@ class Kohana_ACL_Rule {
 	}
 
 	/**
-	 * xx
+	 * Add all roles to the array of allowed roles
 	 *
-	 * @param   type  xx
-	 * @return  type
+	 * @return  ACL_Rule
 	 */
 	public function allow_all()
 	{
@@ -145,10 +141,10 @@ class Kohana_ACL_Rule {
 	}
 
 	/**
-	 * xx
+	 * Add a role(s) to the array of allowed roles
 	 *
-	 * @param   type  xx
-	 * @return  type
+	 * @param   string  The name of a role
+	 * @return  ACL_Rule
 	 */
 	public function allow_role($role)
 	{
@@ -162,10 +158,10 @@ class Kohana_ACL_Rule {
 	}
 
 	/**
-	 * xx
+	 * Add a capability(s) to the array of allowed capabilities
 	 *
-	 * @param   type  xx
-	 * @return  type
+	 * @param   string  The name of a capability
+	 * @return  ACL_Rule
 	 */
 	public function allow_capability($capability)
 	{
@@ -179,10 +175,10 @@ class Kohana_ACL_Rule {
 	}
 
 	/**
-	 * xx
+	 * Add a user(s) to the array of allowed users
 	 *
-	 * @param   type  xx
-	 * @return  type
+	 * @param   mixed  The user
+	 * @return  ACL_Rule
 	 */
 	public function allow_user($user)
 	{
@@ -216,10 +212,10 @@ class Kohana_ACL_Rule {
 	}
 
 	/**
-	 * xx
+	 * Sets the rule to auto mode. The actual capability to be allowed is 
+	 * determined during rule compilation
 	 *
-	 * @param   type  xx
-	 * @return  type
+	 * @return  ACL_Rule
 	 */
 	public function allow_auto()
 	{
@@ -233,10 +229,12 @@ class Kohana_ACL_Rule {
 	}
 
 	/**
-	 * xx
+	 * Does `allow_capability` based on a controller and action. Used in rule
+	 * compilation
 	 *
-	 * @param   type  xx
-	 * @return  type
+	 * @param   string  The controller's name
+	 * @param   string  The action's name
+	 * @return  ACL_Rule
 	 */
 	public function auto_capability($controller, $action)
 	{
@@ -252,7 +250,7 @@ class Kohana_ACL_Rule {
 
 		// If capability does not exist, throw exception
 		if ( ! $capability->loaded())
-			return $this;
+			return $this; // Or should I throw the Exception?
 			//throw new ACL_Exception('The capability :name does not exist.', array(':name' => $name));
 
 		// Allow the capability
@@ -262,10 +260,12 @@ class Kohana_ACL_Rule {
 	}
 
 	/**
-	 * xx
+	 * Add a callback to be executed when the user is not authorized
 	 *
-	 * @param   type  xx
-	 * @return  type
+	 * @param   mixed     The role the callback is tied to
+	 * @param   Callable  A callable function
+	 * @param   array     The callback's arguments
+	 * @return  ACL_Rule
 	 */
 	public function add_callback($role, $function, array $args = array())
 	{
@@ -284,10 +284,9 @@ class Kohana_ACL_Rule {
 	}
 
 	/**
-	 * xx
+	 * Calulates the key of this rule based on its scope parts
 	 *
-	 * @param   type  xx
-	 * @return  type
+	 * @return  string
 	 */
 	public function key()
 	{
@@ -295,10 +294,9 @@ class Kohana_ACL_Rule {
 	}
 
 	/**
-	 * xx
+	 * Determines if the rule is valid.
 	 *
-	 * @param   type  xx
-	 * @return  type
+	 * @return  boolean
 	 */
 	public function valid()
 	{
@@ -312,10 +310,9 @@ class Kohana_ACL_Rule {
 	}
 
 	/**
-	 * xx
+	 * Creates an array representing the rule's behavior. Used in compilation.
 	 *
-	 * @param   type  xx
-	 * @return  type
+	 * @return  array
 	 */
 	public function as_array()
 	{

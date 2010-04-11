@@ -1,5 +1,11 @@
 <?php defined('SYSPATH') OR die('No direct access allowed.');
-
+/**
+ * Capability Model
+ *
+ * @package    ACL
+ * @author     Synapse Studios
+ * @copyright  (c) 2010 Synapse Studios
+ */
 class Model_Acl_Capability extends ORM {
 
 	// Relationships

@@ -13,20 +13,21 @@ class Kohana_ACL {
 	const KEY_SEPARATOR = '|';
 
 	/**
-	 * @var  type  xx
+	 * @var  array  contains the instances (by request) of ACL
 	 */
 	protected static $_instances = array();
 
 	/**
-	 * @var  type  xx
+	 * @var  array  contains all the ACL rules
 	 */
 	protected static $_rules = array();
 
 	/**
-	 * xx
+	 * Creates/Retrieves an instance of ACL based on the request. The first time
+	 * this is called it also creates the default rule for ACL.
 	 *
-	 * @param   type  xx
-	 * @return  type
+	 * @param   Request  The Kohana request object
+	 * @return  ACL
 	 */
 	public static function instance(Request $request = NULL)
 	{
@@ -54,6 +55,7 @@ class Kohana_ACL {
 
 		// Find the key for this request
 		$key = ACL::key($request->directory, $request->controller, $request->action);
+		// @todo should probably factor in whether or not this is a subrequest
 
 		// Register the instance if it doesn't exist
 		if ( ! isset(self::$_instances[$key]))
@@ -65,10 +67,9 @@ class Kohana_ACL {
 	}
 
 	/**
-	 * xx
+	 * Factory for an ACL rule
 	 *
-	 * @param   type  xx
-	 * @return  type
+	 * @return  ACL_Rule
 	 */
 	public static function rule()
 	{
@@ -77,10 +78,10 @@ class Kohana_ACL {
 	}
 
 	/**
-	 * xx
+	 * Validates and adds an ACL_Rule to the rules array
 	 *
-	 * @param   type  xx
-	 * @return  type
+	 * @param   ACL_Rule  The rule to add
+	 * @return  void
 	 */
 	public static function add_rule(ACL_Rule $rule)
 	{
@@ -94,10 +95,10 @@ class Kohana_ACL {
 	}
 
 	/**
-	 * xx
+	 * Creates a unique key from an array of 3 parts representing a rule's scope
 	 *
-	 * @param   type  xx
-	 * @return  type
+	 * @param   mixed  A part or an array of scope parts
+	 * @return  string
 	 */
 	public static function key($parts)
 	{
@@ -116,10 +117,12 @@ class Kohana_ACL {
 	}
 
 	/**
-	 * xx
+	 * This method resolves any wildcards in ACL rules that are created when
+	 * using the `for_current_*()` methods to the actual values from the current
+	 * request.
 	 *
-	 * @param   type  xx
-	 * @return  type
+	 * @param   array  An array of the 3 scope parts
+	 * @return  void
 	 */
 	protected static function resolve_rules($scope)
 	{
@@ -155,6 +158,7 @@ class Kohana_ACL {
 				$key = ACL::key($parts);
 			}
 
+			// If in auto mode (`allow_auto()`), resolve the capability name
 			if ($rule->auto_mode)
 			{
 				$rule->auto_capability($scope['controller'], $scope['action']);
@@ -163,17 +167,15 @@ class Kohana_ACL {
 			$resolved[$key] = $rule;
 		}
 
-		// Relace the keys with the resolved ones
+		// Replace the keys with the resolved ones
 		self::$_rules = $resolved;
 	}
 
-	// Some built-in common callbacks
-
 	/**
-	 * xx
+	 * A static form of the Request's redirect method for use as a callback
 	 *
-	 * @param   type  xx
-	 * @return  type
+	 * @param   string  The url to redirect to
+	 * @return  void
 	 */
 	public static function redirect($url = NULL)
 	{
@@ -183,25 +185,25 @@ class Kohana_ACL {
 
 
 	/**
-	 * @var  type  xx
+	 * @var  Request  The request object to which this instance of ACL is for
 	 */
 	protected $request = NULL;
 
 	/**
-	 * @var  type  xx
+	 * @var  Model_User  The current use as retreived by the Auth module
 	 */
 	protected $user = NULL;
 
 	/**
-	 * @var  type  xx
+	 * @var  array  Contains the compiled rule that will apply to the user
 	 */
 	protected $rule = NULL;
 
 	/**
-	 * xx
+	 * Constructs a new ACL object for a request
 	 *
-	 * @param   type  xx
-	 * @return  type
+	 * @param   Request  The request object
+	 * @return  void
 	 */
 	protected function __construct(Request $request)
 	{
@@ -223,10 +225,10 @@ class Kohana_ACL {
 	}
 
 	/**
-	 * xx
+	 * Returns the "scope" of this request. These values help determine which
+	 * ACL applies to the user
 	 *
-	 * @param   type  xx
-	 * @return  type
+	 * @return  array
 	 */
 	public function scope()
 	{
@@ -239,10 +241,9 @@ class Kohana_ACL {
 	}
 
 	/**
-	 * xx
+	 * This is the procedural method that executes ACL logic and responds
 	 *
-	 * @param   type  xx
-	 * @return  type
+	 * @return  void
 	 */
 	public function authorize()
 	{
@@ -261,10 +262,15 @@ class Kohana_ACL {
 	}
 
 	/**
-	 * xx
+	 * Determines if a user is authorized based on the compiled rule. It
+	 * examines things in the following order:
+     *
+	 * 1. Does the user have the super role?
+	 * 2. Is the user's ID in the allow list?
+	 * 3. Does the user have all of the required capabilities?
+	 * 4. Does the user have at least one of the required roles?
 	 *
-	 * @param   type  xx
-	 * @return  type
+	 * @return  boolean
 	 */
 	protected function user_authorized()
 	{
@@ -302,10 +308,11 @@ class Kohana_ACL {
 	}
 
 	/**
-	 * xx
+	 * Performs a matching callback as defined in he compiled rule. It looks at
+	 * all the callbacks and executes the first one that matches the user's
+	 * role or the default callback if defined. Otherwise, it does nothing.
 	 *
-	 * @param   type  xx
-	 * @return  type
+	 * @return  void
 	 */
 	protected function perform_callback()
 	{
@@ -322,10 +329,9 @@ class Kohana_ACL {
 	}
 
 	/**
-	 * xx
+	 * Compiles the rules based on the scope into a single rule.
 	 *
-	 * @param   type  xx
-	 * @return  type
+	 * @return  void
 	 */
 	protected function compile()
 	{
@@ -367,8 +373,3 @@ class Kohana_ACL {
 	}
 
 } // End ACL
-
-
-
-// Create ACL exception class
-class ACL_Exception extends Kohana_Exception {}

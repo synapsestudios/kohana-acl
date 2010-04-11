@@ -1,5 +1,11 @@
 <?php defined('SYSPATH') OR die('No direct access allowed.');
-
+/**
+ * User Model - Extend this to include ACL functionality
+ *
+ * @package    ACL
+ * @author     Synapse Studios
+ * @copyright  (c) 2010 Synapse Studios
+ */
 class Model_Acl_User extends Model_Auth_User {
 
 	// Relationships
@@ -14,10 +20,10 @@ class Model_Acl_User extends Model_Auth_User {
 	// ACL-related methods
 
 	/**
-	 * xx
+	 * Determines whether or not a user has (is) a particular role
 	 *
-	 * @param   type  xx
-	 * @return  type
+	 * @param   mixed  Role to check for
+	 * @return  boolean
 	 */
 	public function is_a($role)
 	{
@@ -32,14 +38,14 @@ class Model_Acl_User extends Model_Auth_User {
 			throw new ACL_Exception('Tried to check for a role that did not exist.');
 
 		// Return whether or not they have the role
-		return $user->has('role', $role);
+		return (bool) $user->has('role', $role);
 	}
 
 	/**
-	 * xx
+	 * Determines whether or not a user has a particular capability
 	 *
-	 * @param   type  xx
-	 * @return  type
+	 * @param   mixed  Role to check for
+	 * @return  boolean
 	 */
 	public function can($capability)
 	{
@@ -59,14 +65,14 @@ class Model_Acl_User extends Model_Auth_User {
 			throw new Exception('Tried to check for a capability that did not exist.');
 
 		// Return whether or not they have access
-		return $user->has('capability', $capability);
+		return (bool) $user->has('capability', $capability);
 	}
 
 	/**
-	 * xx
+	 * Assigns a role (and associatted capabilities) to a User
 	 *
-	 * @param   type  xx
-	 * @return  type
+	 * @param   mixed  Role to assign
+	 * @return  Model_User
 	 */
 	public function assign_role($role)
 	{
@@ -82,23 +88,21 @@ class Model_Acl_User extends Model_Auth_User {
 
 		// Add the role to the user
 		$this->add('roles', $role);
-		$this->save();
 
 		// Add all of the capabilities associated with the role
 		foreach ($role->capabilities->find_all() as $capability)
 		{
-				$this->add('capabilities', $capability);
+			$this->add('capabilities', $capability);
 		}
-		$this->save();
 
 		return $this;
 	}
 
 	/**
-	 * xx
+	 * Removes a role (and associatted capabilities) from a User
 	 *
-	 * @param   type  xx
-	 * @return  type
+	 * @param   mixed  Role to remove
+	 * @return  Model_User
 	 */
 	public function remove_role($role)
 	{
@@ -115,21 +119,20 @@ class Model_Acl_User extends Model_Auth_User {
 		// Remove all of the capabilities associated with the role
 		foreach ($role->capabilities->find_all() as $capability)
 		{
-				$this->remove('capabilities', $capability);
+			$this->remove('capabilities', $capability);
 		}
 
 		// Remove the role from the user
 		$this->remove('roles', $role);
-		$this->save();
 
 		return $this;
 	}
 
 	/**
-	 * xx
+	 * Assigns a capability to a User
 	 *
-	 * @param   type  xx
-	 * @return  type
+	 * @param   mixed  Capability to assign
+	 * @return  Model_User
 	 */
 	public function assign_capability($capability)
 	{
@@ -145,16 +148,15 @@ class Model_Acl_User extends Model_Auth_User {
 
 		// Add the capability to the user
 		$this->add('capabilities', $capability);
-		$this->save();
 
 		return $this;
 	}
 
 	/**
-	 * xx
+	 * Removes a capability from a User
 	 *
-	 * @param   type  xx
-	 * @return  type
+	 * @param   mixed  Capability to remove
+	 * @return  Model_User
 	 */
 	public function remove_capability($capability)
 	{
@@ -170,16 +172,15 @@ class Model_Acl_User extends Model_Auth_User {
 
 		// Add the capability to the user
 		$this->remove('capabilities', $capability);
-		$this->save();
 
 		return $this;
 	}
 
 	/**
-	 * xx
+	 * Retrieves a list of the names of the roles a user has
 	 *
-	 * @param   type  xx
-	 * @return  type
+	 * @param   boolean  If TRUE, then re-query the database for this list
+	 * @return  array
 	 */
 	public function roles_list($reload = FALSE)
 	{
@@ -206,10 +207,10 @@ class Model_Acl_User extends Model_Auth_User {
 	}
 
 	/**
-	 * xx
+	 * Retrieves a list of the names of the capabilities a user has
 	 *
-	 * @param   type  xx
-	 * @return  type
+	 * @param   boolean  If TRUE, then re-query the database for this list
+	 * @return  array
 	 */
 	public function capabilities_list($reload = FALSE)
 	{
