@@ -226,7 +226,7 @@ class Kohana_ACL {
 
 	/**
 	 * Returns the "scope" of this request. These values help determine which
-	 * ACL applies to the user
+	 * ACL rule applies to the user
 	 *
 	 * @return  array
 	 */
@@ -339,17 +339,22 @@ class Kohana_ACL {
 		// Resolve rules that currently have wildcards
 		ACL::resolve_rules($scope);
 		
-		// Get all the rules that could apply to this request
+		// Re-index the scope array with numbers for looping
 		$scope = array_values($scope);
-		for ($i=2; $i>=0; $i--)
+		
+		// Get all the rules that could apply to this request
+		for ($i = 2; $i >= 0; $i--)
 		{
+			// Get the key for the scope
 			$key = ACL::key($scope);
 			
+			// Look in the rules array for a rule matching the key
 			if ($rule = Arr::get(self::$_rules, $key, FALSE))
 			{
 				$applicable_rules[$key] = $rule;
 			}
 
+			// Remove part of the scope so the next iteration can cascade to another rule
 			$scope[$i] = '';
 		}
 		
