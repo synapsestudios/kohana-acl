@@ -269,16 +269,17 @@ class Kohana_ACL_Rule {
 	 */
 	public function add_callback($role, $function, array $args = array())
 	{
-		// If it is a valid callback, add it to the callbacks list
-		if (is_callable($function))
-		{
-			$role = empty($role) ? ACL::CALLBACK_DEFAULT : $role;
-			$this->callbacks[$role] = array
-			(
-				'function' => $function,
-				'args'     => $args,
-			);
-		}
+		// Check if the function is a valid callback
+		if ( ! is_callable($function))
+			throw new ACL_Exception('An invalid callback was added to the ACL rule.');
+		
+		// Add the callback to the callbacks list
+		$role = empty($role) ? ACL::CALLBACK_DEFAULT : $role;
+		$this->callbacks[$role] = array
+		(
+			'function' => $function,
+			'args'     => $args,
+		);
 
 		return $this;
 	}
@@ -316,13 +317,29 @@ class Kohana_ACL_Rule {
 	 */
 	public function as_array()
 	{
-		return array
-		(
-			'roles'        => array_unique($this->roles),
-			'capabilities' => array_unique($this->capabilities),
-			'users'        => array_unique($this->users),
-			'callbacks'    => $this->callbacks,
-		);
+		$array = array();
+		
+		if ($this->roles = array_unique($this->roles))
+		{
+			$array['roles'] = $this->roles;
+		}
+		
+		if ($this->capabilities = array_unique($this->capabilities))
+		{
+			$array['capabilities'] = $this->capabilities;
+		}
+		
+		if ($this->users = array_unique($this->users))
+		{
+			$array['users'] = $this->users;
+		}
+		
+		if ($this->callbacks)
+		{
+			$array['callbacks'] = $this->callbacks;
+		}
+		
+		return $array;
 	}
 
 } // End ACL Rule

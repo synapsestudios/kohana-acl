@@ -247,6 +247,9 @@ class Kohana_ACL {
 	 */
 	public function authorize()
 	{
+		// Compile the rules
+		$this->compile();
+			
 		// Check if this user has access to this request
 		if ($this->user_authorized())
 			return TRUE;
@@ -274,22 +277,14 @@ class Kohana_ACL {
 	 */
 	protected function user_authorized()
 	{
-		// Compile the rules
-		$this->compile();
-
-		//echo '<b>Compiled Rule:</b>'.Kohana::debug($this->rule);
-		//echo '<b>Request:</b>'.Kohana::debug($this->scope());
-		//echo '<b>User:</b>'.Kohana::debug($this->user->roles_list());
-
 		// If the user has the super role, then allow access
 		$super_role = Kohana::config('acl.super_role');
 		if ($super_role AND in_array($super_role, $this->user->roles_list()))
 			return TRUE;
-
 		// If the user is in the user list, then allow access
 		if (in_array($this->user->id, $this->rule['users']))
 			return TRUE;
-
+			
 		// If the user has all (AND) the capabilities, then allow access
 		$difference = array_diff($this->rule['capabilities'], $this->user->capabilities_list());
 		if ( ! empty($this->rule['capabilities']) AND empty($difference))
@@ -303,7 +298,7 @@ class Kohana_ACL {
 			if ( ! empty($intersection))
 				return TRUE;
 		}
-
+		
 		return FALSE;
 	}
 
@@ -315,12 +310,12 @@ class Kohana_ACL {
 	 * @return  void
 	 */
 	protected function perform_callback()
-	{
+	{		
 		// Loop through the callbacks
 		foreach ($this->rule['callbacks'] as $role => $callback)
 		{
 			// If the user matches the role (or it's a default), execute it
-			if ($this->user->is_a($role) OR $role === ACL::CALLBACK_DEFAULT)
+			if ($role === ACL::CALLBACK_DEFAULT OR $this->user->is_a($role))
 			{
 				call_user_func_array($callback['function'], $callback['args']);
 				return;
@@ -335,17 +330,18 @@ class Kohana_ACL {
 	 */
 	protected function compile()
 	{
+		// Initialize an array for the applicable rules
 		$applicable_rules = array();
+		
+		// Get the scope for this instance of ACL
 		$scope = $this->scope();
 
-		//echo '<b>Rules:</b>'.Kohana::debug(self::$_rules);
-
+		// Resolve rules that currently have wildcards
 		ACL::resolve_rules($scope);
-
-		//echo '<b>Resolved Rules:</b>'.Kohana::debug(self::$_rules);
-
+		
 		// Get all the rules that could apply to this request
-		foreach ($scope as & $value)
+		$scope = array_values($scope);
+		for ($i=2; $i>=0; $i--)
 		{
 			$key = ACL::key($scope);
 			
@@ -354,7 +350,7 @@ class Kohana_ACL {
 				$applicable_rules[$key] = $rule;
 			}
 
-			$value = '';
+			$scope[$i] = '';
 		}
 		
 		// Get default rule
@@ -363,7 +359,6 @@ class Kohana_ACL {
 
 		// Reverse the rules. Compile from the bottom up
 		$applicable_rules = array_reverse($applicable_rules);
-
 
 		// Compile the rule
 		foreach ($applicable_rules as $rule)
