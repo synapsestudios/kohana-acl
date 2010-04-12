@@ -55,7 +55,6 @@ class Kohana_ACL {
 
 		// Find the key for this request
 		$key = ACL::key($request->directory, $request->controller, $request->action);
-		// @todo should probably factor in whether or not this is a subrequest
 
 		// Register the instance if it doesn't exist
 		if ( ! isset(self::$_instances[$key]))
@@ -100,14 +99,16 @@ class Kohana_ACL {
 	 * @param   mixed  A part or an array of scope parts
 	 * @return  string
 	 */
-	public static function key($parts)
+	public static function key($directory, $controller = NULL, $action = NULL)
 	{
-		// Make sure the arguments are correct for calculating the key
-		if ( ! is_array($parts) OR count($parts) !== 3)
+		// Get the parts (depends on the arguments)
+		if (is_array($directory) AND count($directory) === 3)
 		{
-			$parts = func_get_args();
-			if (count($parts) !== 3)
-				throw new InvalidArgumentException(__('The ACL::key() method requires exactly 3 parts.'));
+			$parts = $directory;
+		}
+		else
+		{
+			$parts = compact('directory', 'controller', 'action');
 		}
 
 		// Create the key
@@ -169,17 +170,6 @@ class Kohana_ACL {
 
 		// Replace the keys with the resolved ones
 		self::$_rules = $resolved;
-	}
-
-	/**
-	 * A static form of the Request's redirect method for use as a callback
-	 *
-	 * @param   string  The url to redirect to
-	 * @return  void
-	 */
-	public static function redirect($url = NULL)
-	{
-		Request::instance()->redirect($url);
 	}
 
 
@@ -373,3 +363,6 @@ class Kohana_ACL {
 	}
 
 } // End ACL
+
+// ACL Exception
+class ACL_Exception extends Kohana_Exception {}

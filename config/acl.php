@@ -8,9 +8,5 @@ return array
 	
 	'auto_format'          => '{action}-{controller}',
 
-	'default_callback'     => array
-	(
-		'function' => NULL,
-		'args'     => array(),
-	)
+	'default_callback'     => NULL,
 );
