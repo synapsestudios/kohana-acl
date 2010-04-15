@@ -1,28 +1,13 @@
-<?php defined('SYSPATH') OR die('No direct access allowed.');
-// EXAMPLES:
+<?php defined('SYSPATH') or die('No direct access allowed.');
 
-// For admin/*/* allow only role "admin"
+// Allow
 ACL::add_rule(ACL::rule()
-	->for_directory('admin')
-	->allow_role('admin')
+	->for_controller('userguide')
+	->allow_all()
 );
 
-// For -/user/{current_action} allow capability "{current_action}_user"
+// Allow
 ACL::add_rule(ACL::rule()
-	->for_controller('user')
-	->for_current_action()
-	->allow_auto()
-);
-
-// For -/user/delete allow capability "delete_user"
-ACL::add_rule(ACL::rule()
-	->for_controller('user')
-	->for_action('delete')
-	->allow_capability('delete-user')
-);
-
-// For -/public/* allow all roles
-ACL::add_rule(ACL::rule()
-	->for_controller('public')
+	->for_controller('welcome')
 	->allow_all()
 );
