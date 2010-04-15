@@ -34,12 +34,18 @@ have, or by the roles they have.
 
 ## Requirements & Installation
 
-The ACL module requires that the Auth Module and ORM Module already be installed and setup. In order for the ACL module to work properly, the following things must be done:
+The ACL module requires that the Auth Module and ORM Module already be installed
+ and setup. In order for the ACL module to work properly, the following things 
+ must be done:
 
-1. The ACL module needs to be enabled in bootstrap, it should appear in the modules list before Auth.
-2. The `acl.sql` file needs to be run to add the ACL module's database tables and relationships.
-3. If you are overwriting the role or user models in your application, be sure to extend ACL_Model_Role and ACL_Model_User classes.
+1. The ACL module needs to be enabled in bootstrap, it should appear in the 
+modules list before Auth.
+2. The `acl.sql` file needs to be run to add the ACL module's database tables 
+and relationships.
+3. If you are overwriting the role or user models in your application, be sure 
+to extend ACL_Model_Role and ACL_Model_User classes.
 4. You need to write an ACL rules file for your application.
 5. The boostrap file needs to be edited. 
     1. The boostrap file should `require` the ACL rules file.
-    2. The bootstrap needs to run the `ACL::instance()->authorize()` sometime after the rules file is included and before request is executed.
+    2. The bootstrap needs to run the `ACL::instance()->authorize()` sometime 
+	after the rules file is included and before request is executed.

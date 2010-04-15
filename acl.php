@@ -1,12 +1,12 @@
 <?php defined('SYSPATH') or die('No direct access allowed.');
 
-// Allow
+// Allow all to access the userguide
 ACL::add_rule(ACL::rule()
 	->for_controller('userguide')
 	->allow_all()
 );
 
-// Allow
+// Allow all to access the welcome controller
 ACL::add_rule(ACL::rule()
 	->for_controller('welcome')
 	->allow_all()
