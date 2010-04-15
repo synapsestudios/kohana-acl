@@ -4,9 +4,7 @@ return array
 (
 	'public_role'          => 'guest',
 
-	'super_role'           => 'developer',
+	'super_role'           => NULL,
 	
 	'auto_format'          => '{action}-{controller}',
-
-	'default_callback'     => NULL,
 );

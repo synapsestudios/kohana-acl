@@ -11,7 +11,7 @@ class Kohana_ACL_Rule {
 	/**
 	 * @var  boolean  Auto mode is `TRUE` when the `auto_allow` method is run
 	 */
-	public $auto_mode       = FALSE;
+	protected $auto_mode    = FALSE;
 
 	/**
 	 * @var  string  The requested directory
@@ -48,6 +48,16 @@ class Kohana_ACL_Rule {
 	 */
 	protected $callbacks    = array();
 
+	/**
+	 * Returns whether or not the rule is in auto mode
+	 * 
+	 * @return  boolean
+	 */
+	public function is_auto_mode()
+	{
+		return (bool) $this->auto_mode;
+	}
+	
 	/**
 	 * Sets the directory for which the rule applies
 	 *

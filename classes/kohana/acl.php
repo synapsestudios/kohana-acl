@@ -34,17 +34,8 @@ class Kohana_ACL {
 		// Set the default rule when creating the first instance
 		if ( ! isset(self::$_rules[ACL::KEY_SEPARATOR.ACL::KEY_SEPARATOR]))
 		{
-			// Create a default rule
-			$default_rule = ACL::rule();
-
-			// Set the callback for the default rule
-			if ($callback = Kohana::config('acl.default_callback'))
-			{
-				$default_rule->add_callback(NULL, $callback['function'], $callback['args']);
-			}
-
-			// Add the default rule
-			ACL::add_rule($default_rule);
+			// Create and add a default rule
+			ACL::add_rule(ACL::rule());
 		}
 
 		// If no request was specified, then use the current, main request
@@ -156,16 +147,19 @@ class Kohana_ACL {
 				}
 
 				// Put the key back together
-				$key = ACL::key($parts);
+				$rule_key = ACL::key($parts);
+				
+				// Create a key for the scope
+				$scope_key = ACL::key($scope);
+				
+				// If the rule is in auto mode and it applies to the current scope, resolve the capability name
+				if ($rule->is_auto_mode() AND $rule_key === $scope_key)
+				{
+					$rule->auto_capability($parts[1], $parts[2]);
+				}
 			}
 
-			// If in auto mode (`allow_auto()`), resolve the capability name
-			if ($rule->auto_mode)
-			{
-				$rule->auto_capability($scope['controller'], $scope['action']);
-			}
-
-			$resolved[$key] = $rule;
+			$resolved[$rule_key] = $rule;
 		}
 
 		// Replace the keys with the resolved ones
@@ -354,6 +348,8 @@ class Kohana_ACL {
 
 		// Reverse the rules. Compile from the bottom up
 		$applicable_rules = array_reverse($applicable_rules);
+		
+		echo Kohana::debug($applicable_rules); die;
 
 		// Compile the rule
 		foreach ($applicable_rules as $rule)
