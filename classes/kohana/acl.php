@@ -83,6 +83,36 @@ class Kohana_ACL {
 		$key = $rule->key();
 		self::$_rules[$key] = $rule;
 	}
+	
+	/**
+	 * Remove all previously-added rules
+	 *
+	 * @return  void
+	 */
+	public static function clear_rules()
+	{
+		// Remove all rules
+		self::$_rules = array();
+		
+		// Decompile existing rules for ACL instances
+		ACL::clear_compiled_rules()
+		
+		// Re-add a default rule
+		ACL::add_rule(ACL::rule());
+	}
+	
+	/**
+	 * Decompile existing rules for ACL instances
+	 *
+	 * @return  void
+	 */
+	public static function clear_compiled_rules()
+	{
+		foreach (self::$_instances as $acl)
+		{
+			$acl->initialize_rule();
+		}
+	}
 
 	/**
 	 * Creates a unique key from an array of 3 parts representing a rule's scope
@@ -153,9 +183,9 @@ class Kohana_ACL {
 				$scope_key = ACL::key($scope);
 				
 				// If the rule is in auto mode and it applies to the current scope, resolve the capability name
-				if ($rule->is_auto_mode() AND $rule_key === $scope_key)
+				if ($rule->in_auto_mode() AND $rule_key === $scope_key)
 				{
-					$rule->auto_capability($parts[1], $parts[2]);
+					$rule->auto_capability($scope['controller'], $scope['action']);
 				}
 			}
 
@@ -199,13 +229,7 @@ class Kohana_ACL {
 			$this->user = ORM::factory('user');
 		}
 
-		$this->rule    = array
-		(
-			'roles'        => array(),
-			'capabilities' => array(),
-			'users'        => array(),
-			'callbacks'    => array(),
-		);
+		$this->initialize_rule();
 	}
 
 	/**
@@ -246,6 +270,24 @@ class Kohana_ACL {
 
 		// Throw a 403 Exception if no callback has altered program flow
 		throw new Kohana_Request_Exception('You are not authorized to access this resource.', NULL, 403);
+	}
+	
+	/**
+	 * Initialize the compiled rule to be empty
+	 *
+	 * @return  ACL
+	 */
+	public function initialize_rule()
+	{
+		$this->rule = array
+		(
+			'roles'        => array(),
+			'capabilities' => array(),
+			'users'        => array(),
+			'callbacks'    => array(),
+		);
+		
+		return $this;
 	}
 
 	/**

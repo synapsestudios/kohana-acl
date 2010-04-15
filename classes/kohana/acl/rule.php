@@ -53,7 +53,7 @@ class Kohana_ACL_Rule {
 	 * 
 	 * @return  boolean
 	 */
-	public function is_auto_mode()
+	public function in_auto_mode()
 	{
 		return (bool) $this->auto_mode;
 	}
