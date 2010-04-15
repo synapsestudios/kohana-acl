@@ -74,7 +74,7 @@ class Model_Acl_User extends Model_Auth_User {
 	 * @param   mixed  Role to assign
 	 * @return  Model_User
 	 */
-	public function assign_role($role)
+	public function add_role($role)
 	{
 		// Get role object
 		if ( ! $role instanceOf Model_Role)
@@ -134,7 +134,7 @@ class Model_Acl_User extends Model_Auth_User {
 	 * @param   mixed  Capability to assign
 	 * @return  Model_User
 	 */
-	public function assign_capability($capability)
+	public function add_capability($capability)
 	{
 		// Get capability object
 		if ( ! $capability instanceOf Model_Capability)
