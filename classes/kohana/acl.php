@@ -221,14 +221,17 @@ class Kohana_ACL {
 	 */
 	protected function __construct(Request $request)
 	{
+		// Store the request for this instance
 		$this->request = $request;
 		
-		$this->user    = Auth::instance()->get_user();
+		// Get the user (via Auth)
+		$this->user = Auth::instance()->get_user();
 		if ( ! $this->user)
 		{
 			$this->user = ORM::factory('user');
 		}
 
+		// Initialize the rule
 		$this->initialize_rule();
 	}
 
