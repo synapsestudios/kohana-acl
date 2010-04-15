@@ -20,7 +20,3 @@ ALTER TABLE `capabilities`
 ALTER TABLE `capabilities_users`
   ADD CONSTRAINT `capabilities_users_ibfk_1` FOREIGN KEY (`capability_id`) REFERENCES `capabilities` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `capabilities_users_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
-  
-REPLACE INTO `roles` (`id`, `name`, `description`) VALUES(1, 'login', 'Login privileges, granted after account confirmation');
-REPLACE INTO `roles` (`id`, `name`, `description`) VALUES(2, 'admin', 'Administrative user, has access to the full application.');
-REPLACE INTO `roles` (`id`, `name`, `description`) VALUES(3, 'developer', 'Web developer, has access to everything (including debugging tools).');
