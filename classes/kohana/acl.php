@@ -95,7 +95,7 @@ class Kohana_ACL {
 		self::$_rules = array();
 		
 		// Decompile existing rules for ACL instances
-		ACL::clear_compiled_rules()
+		ACL::clear_compiled_rules();
 		
 		// Re-add a default rule
 		ACL::add_rule(ACL::rule());
