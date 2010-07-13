@@ -38,7 +38,7 @@ class Model_Acl_User extends Model_Auth_User {
 			throw new ACL_Exception('Tried to check for a role that did not exist.');
 
 		// Return whether or not they have the role
-		return (bool) $user->has('role', $role);
+		return (bool) $this->has('roles', $role);
 	}
 
 	/**
