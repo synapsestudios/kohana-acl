@@ -395,8 +395,6 @@ class Kohana_ACL {
 
 		// Reverse the rules. Compile from the bottom up
 		$applicable_rules = array_reverse($applicable_rules);
-		
-		echo Kohana::debug($applicable_rules); die;
 
 		// Compile the rule
 		foreach ($applicable_rules as $rule)
