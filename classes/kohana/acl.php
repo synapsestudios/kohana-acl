@@ -153,6 +153,8 @@ class Kohana_ACL {
 		// Loop through the rules and resolve all wildcards
 		foreach (self::$_rules as $key => $rule)
 		{
+			$rule_key = $key;
+
 			if (strpos($key, ACL::KEY_WILDCARD) !== FALSE)
 			{
 				// Separate the key into its parts
