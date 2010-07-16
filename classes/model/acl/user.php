@@ -211,7 +211,7 @@ class Model_Acl_User extends Model_Auth_User {
 			}
 		}
 
-		return $roles[$this->id];
+		return Arr::get($roles, $this->id, array());
 	}
 
 	/**
@@ -240,7 +240,7 @@ class Model_Acl_User extends Model_Auth_User {
 			}
 		}
 
-		return $capabilities[$this->id];
+		return Arr::get($capabilities, $this->id, array());
 	}
 
 } // End User Model
