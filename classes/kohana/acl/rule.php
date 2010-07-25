@@ -1,4 +1,4 @@
-<?php defined('SYSPATH') OR die('No direct access allowed.');
+<?php defined('SYSPATH') or die('No direct access allowed.');
 /**
  * ACL Rule library
  *
@@ -7,11 +7,6 @@
  * @copyright  (c) 2010 Synapse Studios
  */
 class Kohana_ACL_Rule {
-
-	/**
-	 * @var  boolean  Auto mode is `TRUE` when the `auto_allow` method is run
-	 */
-	protected $auto_mode    = FALSE;
 
 	/**
 	 * @var  string  The requested directory
@@ -26,7 +21,7 @@ class Kohana_ACL_Rule {
 	/**
 	 * @var  string  The requested action
 	 */
-	protected $action       = '';
+	protected $actions      = array();
 
 	/**
 	 * @var  array  An array of all added roles
@@ -49,15 +44,10 @@ class Kohana_ACL_Rule {
 	protected $callbacks    = array();
 
 	/**
-	 * Returns whether or not the rule is in auto mode
-	 * 
-	 * @return  boolean
+	 * @var  integer  Indicates how specific a rule is 
 	 */
-	public function in_auto_mode()
-	{
-		return (bool) $this->auto_mode;
-	}
-	
+	public $specificity     = 0;
+
 	/**
 	 * Sets the directory for which the rule applies
 	 *
@@ -67,6 +57,8 @@ class Kohana_ACL_Rule {
 	public function for_directory($directory)
 	{
 		$this->directory = $directory;
+
+		$this->specificity++;
 		
 		return $this;
 	}
@@ -81,6 +73,8 @@ class Kohana_ACL_Rule {
 	{
 		$this->controller = $controller;
 
+		$this->specificity++;
+
 		return $this;
 	}
 
@@ -92,44 +86,13 @@ class Kohana_ACL_Rule {
 	 */
 	public function for_action($action)
 	{
-		$this->action = $action;
+		// Allow for multiple actions
+		$actions = func_get_args();
 
-		return $this;
-	}
+		$this->actions = array_merge($this->actions, $actions);
 
-	/**
-	 * Sets the directory to resolve later to the current request's
-	 *
-	 * @return  ACL_Rule
-	 */
-	public function for_current_directory()
-	{
-		$this->for_directory(ACL::KEY_WILDCARD);
-			
-		return $this;
-	}
+		$this->specificity++;
 
-	/**
-	 * Sets the controller to resolve later to the current request's
-	 *
-	 * @return  ACL_Rule
-	 */
-	public function for_current_controller()
-	{
-		$this->for_controller(ACL::KEY_WILDCARD);
-			
-		return $this;
-	}
-
-	/**
-	 * Sets the action to resolve later to the current request's
-	 *
-	 * @return  ACL_Rule
-	 */
-	public function for_current_action()
-	{
-		$this->for_action(ACL::KEY_WILDCARD);
-			
 		return $this;
 	}
 
@@ -141,11 +104,8 @@ class Kohana_ACL_Rule {
 	public function allow_all()
 	{
 		// Add all roles (including public)
+		$this->roles   = ACL::$valid_roles;
 		$this->roles[] = Kohana::config('acl.public_role');
-		foreach (ORM::factory('role')->find_all() as $role)
-		{
-			$this->roles[] = $role->name;
-		}
 
 		return $this;
 	}
@@ -160,7 +120,13 @@ class Kohana_ACL_Rule {
 	{
 		// Allow for multiple roles
 		$roles = func_get_args();
-		
+
+		// Check for invalid roles
+		$invalid_roles = array_diff($roles, ACL::$valid_roles);
+		if ( ! empty($invalid_roles))
+			throw new Kohana_ACL_Exception ('An invalid role, :role, was added to an ACL rule.',
+				array(':role' => $invalid_roles[0]));
+
 		// Add these roles to the current set
 		$this->roles = array_merge($this->roles, $roles);
 
@@ -177,6 +143,12 @@ class Kohana_ACL_Rule {
 	{
 		// Allow for multiple capabilities
 		$capabilities = func_get_args();
+
+		// Check for invalid capabilities
+		$invalid_capabilities = array_diff($capabilities, ACL::$valid_capabilities);
+		if ( ! empty($invalid_capabilities))
+			throw new Kohana_ACL_Exception ('An invalid capability, :capability, was added to an ACL rule.',
+				array(':capability' => $invalid_capabilities[0]));
 		
 		// Add these capabilities to the current set
 		$this->capabilities = array_merge($this->capabilities, $capabilities);
@@ -208,7 +180,9 @@ class Kohana_ACL_Rule {
 			// If a string was passed in, get the User object
 			if (is_string($user))
 			{
-				$user = ORM::factory('user', array('username' => $user));
+				$username = $user;
+				$user = ORM::factory('user');
+				$user->where($user->unique_key($username), "=", $username)->find();
 			}
 
 			// Get the ID from the User object and add it
@@ -217,53 +191,6 @@ class Kohana_ACL_Rule {
 				$this->users[] = $user->id;
 			}
 		}
-
-		return $this;
-	}
-
-	/**
-	 * Sets the rule to auto mode. The actual capability to be allowed is 
-	 * determined during rule compilation
-	 *
-	 * @return  ACL_Rule
-	 */
-	public function allow_auto()
-	{
-		// Make sure the controller and action are set
-		if ( ! $this->controller OR ! $this->action)
-			throw new ACL_Exception('You can only do allow_auto on rules where the scope for both the controller and action are defined.');
-	
-		$this->auto_mode = TRUE;
-		
-		return $this;
-	}
-
-	/**
-	 * Does `allow_capability` based on a controller and action. Used in rule
-	 * compilation
-	 *
-	 * @param   string  The controller's name
-	 * @param   string  The action's name
-	 * @return  ACL_Rule
-	 */
-	public function auto_capability($controller, $action)
-	{
-		// Get capability associated with this request
-		$name = strtolower(str_ireplace(
-			array('{controller}', '{action}'),
-			array($controller, $action),
-			Kohana::config('acl.auto_format')
-		));
-
-		// Get capability object
-		$capability = ORM::factory('capability', array('name' => $name));
-
-		// If capability does not exist, throw exception
-		if ( ! $capability->loaded())
-			throw new ACL_Exception('The capability :name does not exist.', array(':name' => $name));
-
-		// Allow the capability
-		$this->allow_capability($capability->name);
 
 		return $this;
 	}
@@ -280,7 +207,7 @@ class Kohana_ACL_Rule {
 	{
 		// Check if the function is a valid callback
 		if ( ! is_callable($function))
-			throw new ACL_Exception('An invalid callback was added to the ACL rule.');
+			throw new Kohana_ACL_Exception('An invalid callback was added to the ACL rule.');
 		
 		// Add the callback to the callbacks list
 		$role = empty($role) ? ACL::CALLBACK_DEFAULT : $role;
@@ -294,13 +221,24 @@ class Kohana_ACL_Rule {
 	}
 
 	/**
-	 * Calulates the key of this rule based on its scope parts
+	 * Performs a matching callback as defined in he compiled rule. It looks at
+	 * all the callbacks and executes the first one that matches the user's
+	 * role or the default callback if defined. Otherwise, it does nothing.
 	 *
-	 * @return  string
+	 * @return  void
 	 */
-	public function key()
+	public function perform_callback(Model_User $user)
 	{
-		return ACL::key($this->directory, $this->controller, $this->action);
+		// Loop through the callbacks
+		foreach ($this->callbacks as $role => $callback)
+		{
+			// If the user matches the role (or it's a default), execute it
+			if ($role === ACL::CALLBACK_DEFAULT OR $user->is_a($role))
+			{
+				call_user_func_array($callback['function'], $callback['args']);
+				return;
+			}
+		}
 	}
 
 	/**
@@ -311,7 +249,7 @@ class Kohana_ACL_Rule {
 	public function valid()
 	{
 		// If an action is defined, a controller must also be defined
-		if ( ! empty($this->action))
+		if ( ! empty($this->actions))
 		{
 			return ! empty($this->controller);
 		}
@@ -319,36 +257,43 @@ class Kohana_ACL_Rule {
 		return TRUE;
 	}
 
-	/**
-	 * Creates an array representing the rule's behavior. Used in compilation.
-	 *
-	 * @return  array
-	 */
-	public function as_array()
+	public function applies_to(Request $request)
 	{
-		$array = array();
-		
-		if ($this->roles = array_unique($this->roles))
+		$directory_matches  = empty($this->directory) OR $request->directory == $this->directory;
+		$controller_matches = empty($this->controller) OR $request->controller == $this->controller;
+		$action_matches     = empty($this->actions) OR in_array($request->action, $this->actions);
+
+		return $directory_matches AND $controller_matches AND $action_matches;
+	}
+
+	public function merge_rule(ACL_Rule $rule)
+	{
+		$rule_left  = ($rule->specificity >= $this->specificity) ? $this : $rule;
+		$rule_right = ($rule->specificity >= $this->specificity) ? $rule : $this;
+
+		$rule_left->specificity = max($rule_left->specificity, $rule_right->specificity);
+
+		if ( ! empty($rule_right->roles))
 		{
-			$array['roles'] = $this->roles;
+			$rule_left->roles = $rule_right->roles;
 		}
-		
-		if ($this->capabilities = array_unique($this->capabilities))
+
+		if ( ! empty($rule_right->capabilities))
 		{
-			$array['capabilities'] = $this->capabilities;
+			$rule_left->capabilities = $rule_right->capabilities;
 		}
-		
-		if ($this->users = array_unique($this->users))
+
+		if ( ! empty($rule_right->users))
 		{
-			$array['users'] = $this->users;
+			$rule_left->users = $rule_right->users;
 		}
+
+		return $rule_left;
+	}
+
+	public function authorize_user(Model_User $user)
+	{
 		
-		if ($this->callbacks)
-		{
-			$array['callbacks'] = $this->callbacks;
-		}
-		
-		return $array;
 	}
 
 } // End ACL Rule

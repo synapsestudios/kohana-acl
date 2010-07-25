@@ -1,4 +1,4 @@
-<?php defined('SYSPATH') OR die('No direct access allowed.');
+<?php defined('SYSPATH') or die('No direct access allowed.');
 /**
  * User Model - Extend this to include ACL functionality
  *
@@ -35,7 +35,7 @@ class Model_Acl_User extends Model_Auth_User {
 		
 		// If object failed to load then throw exception
 		if ( ! $role->loaded())
-			throw new ACL_Exception('Tried to check for a role that did not exist.');
+			throw new UnexpectedValueException('Tried to check for a role that did not exist.');
 
 		// Return whether or not they have the role
 		return (bool) $this->has('roles', $role);
@@ -62,7 +62,7 @@ class Model_Acl_User extends Model_Auth_User {
 		
 		// If object failed to load then throw exception
 		if ( ! $capability->loaded())
-			throw new ACL_Exception('Tried to check for a capability that did not exist.');
+			throw new UnexpectedValueException('Tried to check for a capability that did not exist.');
 
 		// Return whether or not they have access
 		return (bool) $user->has('capability', $capability);
@@ -84,7 +84,7 @@ class Model_Acl_User extends Model_Auth_User {
 
 		// If object failed to load then throw exception
 		if ( ! $role->loaded())
-			throw new ACL_Exception('Tried to assign a role that did not exist.');
+			throw new UnexpectedValueException('Tried to assign a role that did not exist.');
 
 		// Add the role to the user
 		$this->add('roles', $role);
@@ -114,7 +114,7 @@ class Model_Acl_User extends Model_Auth_User {
 
 		// If object failed to load then throw exception
 		if ( ! $role->loaded())
-			throw new ACL_Exception('Tried to remove a role that did not exist.');
+			throw new UnexpectedValueException('Tried to remove a role that did not exist.');
 
 		// Remove all of the capabilities associated with the role
 		foreach ($role->capabilities->find_all() as $capability)
@@ -144,11 +144,11 @@ class Model_Acl_User extends Model_Auth_User {
 
 		// If object failed to load then throw exception
 		if ( ! $capability->loaded())
-			throw new ACL_Exception('Tried to assign a capability that did not exist.');
+			throw new UnexpectedValueException('Tried to assign a capability that did not exist.');
 
 		// Capabilities can only be assigned when a user has the associated role
 		if ( ! $this->has('roles', $capability->role))
-			throw new ACL_Exception('Tried to assign the :capability capability to a user without the required :role role.',
+			throw new UnexpectedValueException('Tried to assign the :capability capability to a user without the required :role role.',
 				array(':capability' => $capability->name, ':role' => $capability->role->name));
 			
 		// Add the capability to the user
@@ -173,7 +173,7 @@ class Model_Acl_User extends Model_Auth_User {
 
 		// If object failed to load then throw exception
 		if ( ! $capability->loaded())
-			throw new ACL_Exception('Tried to remove a capability that did not exist.');
+			throw new UnexpectedValueException('Tried to remove a capability that did not exist.');
 
 		// Add the capability to the user
 		$this->remove('capabilities', $capability);

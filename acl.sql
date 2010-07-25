@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS `capabilities` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `role_id` int(10) unsigned NOT NULL,
+  `role_id` int(10) unsigned NULL,
   `name` varchar(32) NOT NULL,
   `description` varchar(255) NOT NULL,
   PRIMARY KEY (`id`),

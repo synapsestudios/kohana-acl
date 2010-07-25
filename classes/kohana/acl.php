@@ -1,4 +1,4 @@
-<?php defined('SYSPATH') OR die('No direct access allowed.');
+<?php defined('SYSPATH') or die('No direct access allowed.');
 /**
  * ACL library
  *
@@ -9,8 +9,6 @@
 class Kohana_ACL {
 
 	const CALLBACK_DEFAULT = '{default}';
-	const KEY_WILDCARD = '?';
-	const KEY_SEPARATOR = '|';
 
 	/**
 	 * @var  array  contains the instances (by request) of ACL
@@ -22,6 +20,11 @@ class Kohana_ACL {
 	 */
 	protected static $_rules = array();
 
+	public static $valid_roles = NULL;
+
+	public static $valid_capabilities = NULL;
+
+
 	/**
 	 * Creates/Retrieves an instance of ACL based on the request. The first time
 	 * this is called it also creates the default rule for ACL.
@@ -31,26 +34,39 @@ class Kohana_ACL {
 	 */
 	public static function instance(Request $request = NULL)
 	{
-		// Set the default rule when creating the first instance
-		if ( ! isset(self::$_rules[ACL::KEY_SEPARATOR.ACL::KEY_SEPARATOR]))
+		// Get list of all roles
+		if (self::$valid_roles === NULL)
 		{
-			// Create and add a default rule
-			ACL::add_rule(ACL::rule());
+			self::$valid_roles = array();
+			foreach (ORM::factory('role')->find_all() as $role)
+			{
+				self::$valid_roles[] = $role->name;
+			}
 		}
 
-		// If no request was specified, then use the current, main request
+		// Get list of all capabilities
+		if (self::$valid_capabilities === NULL)
+		{
+			self::$valid_capabilities = array();
+			foreach (ORM::factory('capability')->find_all() as $capability)
+			{
+				self::$valid_capabilities[] = $capability->name;
+			}
+		}
+
+		// Get the current request, if a request was not provided
 		if ($request === NULL)
 		{
-			$request = Request::instance();
+			$request = Request::current();
 		}
 
-		// Find the key for this request
-		$key = ACL::key($request->directory, $request->controller, $request->action);
+		// The the current request's URI as the key for this instance
+		$key = $request->uri;
 
 		// Register the instance if it doesn't exist
 		if ( ! isset(self::$_instances[$key]))
 		{
-			self::$_instances[$key] = new self($request);
+			self::$_instances[$key] = new ACL($request);
 		}
 
 		return self::$_instances[$key];
@@ -64,139 +80,122 @@ class Kohana_ACL {
 	public static function rule()
 	{
 		// Return an ACL rule
-		return new ACL_Rule;
-	}
-
-	/**
-	 * Validates and adds an ACL_Rule to the rules array
-	 *
-	 * @param   ACL_Rule  The rule to add
-	 * @return  void
-	 */
-	public static function add_rule(ACL_Rule $rule)
-	{
-		// Check if the rule is valid, if not throw an exception
-		if ( ! $rule->valid())
-			throw new ACL_Exception('The ACL Rule was invalid and could not be added.');
-
-		// Find the rule's key and add it to the array of rules
-		$key = $rule->key();
-		self::$_rules[$key] = $rule;
+		return self::$_rules[] = new ACL_Rule;
 	}
 	
-	/**
-	 * Remove all previously-added rules
-	 *
-	 * @return  void
-	 */
-	public static function clear_rules()
-	{
-		// Remove all rules
-		self::$_rules = array();
-		
-		// Decompile existing rules for ACL instances
-		ACL::clear_compiled_rules();
-		
-		// Re-add a default rule
-		ACL::add_rule(ACL::rule());
-	}
-	
-	/**
-	 * Decompile existing rules for ACL instances
-	 *
-	 * @return  void
-	 */
-	public static function clear_compiled_rules()
-	{
-		foreach (self::$_instances as $acl)
-		{
-			$acl->initialize_rule();
-		}
-	}
+//	/**
+//	 * Remove all previously-added rules
+//	 *
+//	 * @return  void
+//	 */
+//	public static function clear_rules()
+//	{
+//		// Remove all rules
+//		self::$_rules = array();
+//
+//		// Decompile existing rules for ACL instances
+//		ACL::clear_compiled_rules();
+//
+//		// Re-add a default rule
+//		ACL::add_rule(ACL::rule());
+//	}
+//
+//	/**
+//	 * Decompile existing rules for ACL instances
+//	 *
+//	 * @return  void
+//	 */
+//	public static function clear_compiled_rules()
+//	{
+//		foreach (self::$_instances as $acl)
+//		{
+//			$acl->initialize_rule();
+//		}
+//	}
 
-	/**
-	 * Creates a unique key from an array of 3 parts representing a rule's scope
-	 *
-	 * @param   mixed  A part or an array of scope parts
-	 * @return  string
-	 */
-	public static function key($directory, $controller = NULL, $action = NULL)
-	{
-		// Get the parts (depends on the arguments)
-		if (is_array($directory) AND count($directory) === 3)
-		{
-			$parts = $directory;
-		}
-		else
-		{
-			$parts = compact('directory', 'controller', 'action');
-		}
-
-		// Create the key
-		$key = implode(ACL::KEY_SEPARATOR, $parts);
-
-		return $key;
-	}
-
-	/**
-	 * This method resolves any wildcards in ACL rules that are created when
-	 * using the `for_current_*()` methods to the actual values from the current
-	 * request.
-	 *
-	 * @param   array  An array of the 3 scope parts
-	 * @return  void
-	 */
-	protected static function resolve_rules($scope)
-	{
-		$resolved = array();
-
-		// Loop through the rules and resolve all wildcards
-		foreach (self::$_rules as $key => $rule)
-		{
-			$rule_key = $key;
-
-			if (strpos($key, ACL::KEY_WILDCARD) !== FALSE)
-			{
-				// Separate the key into its parts
-				$parts = explode(ACL::KEY_SEPARATOR, $key);
-
-				// Resolve the directory
-				if ($parts[0] == ACL::KEY_WILDCARD)
-				{
-					$parts[0] = $scope['directory'];
-				}
-
-				// Resolve the controller
-				if ($parts[1] == ACL::KEY_WILDCARD)
-				{
-					$parts[1] = $scope['controller'];
-				}
-
-				// Resolve the action
-				if ($parts[2] == ACL::KEY_WILDCARD)
-				{
-					$parts[2] = $scope['action'];
-				}
-
-				// Put the key back together
-				$rule_key = ACL::key($parts);
-				
-				// Create a key for the scope
-				$scope_key = ACL::key($scope);
-				
-				// If the rule is in auto mode and it applies to the current scope, resolve the capability name
-				if ($rule->in_auto_mode() AND $rule_key === $scope_key)
-				{
-					$rule->auto_capability($scope['controller'], $scope['action']);
-				}
-			}
-
-			$resolved[$rule_key] = $rule;
-		}
-
-		// Replace the keys with the resolved ones
-		self::$_rules = $resolved;
-	}
+//	/**
+//	 * Creates a unique key from an array of 3 parts representing a rule's scope
+//	 *
+//	 * @param   mixed  A part or an array of scope parts
+//	 * @return  string
+//	 */
+//	public static function key($directory, $controller = NULL, $action = NULL)
+//	{
+//		// Get the parts (depends on the arguments)
+//		if (is_array($directory) AND count($directory) === 3)
+//		{
+//			$parts = $directory;
+//		}
+//		else
+//		{
+//			$parts = compact('directory', 'controller', 'action');
+//		}
+//
+//		// Create the key
+//		$key = implode(ACL::KEY_SEPARATOR, $parts);
+//
+//		return $key;
+//	}
+//
+//	/**
+//	 * This method resolves any wildcards in ACL rules that are created when
+//	 * using the `for_current_*()` methods to the actual values from the current
+//	 * request.
+//	 *
+//	 * @param   array  An array of the 3 scope parts
+//	 * @return  void
+//	 */
+//	protected static function resolve_rules($scope)
+//	{
+//		$resolved = array();
+//
+//		// Loop through the rules and resolve all wildcards
+//		foreach (self::$_rules as $key => $rule)
+//		{
+//			$rule_key = $key;
+//
+//			if (strpos($key, ACL::KEY_WILDCARD) !== FALSE)
+//			{
+//				// Separate the key into its parts
+//				$parts = explode(ACL::KEY_SEPARATOR, $key);
+//
+//				// Resolve the directory
+//				if ($parts[0] == ACL::KEY_WILDCARD)
+//				{
+//					$parts[0] = $scope['directory'];
+//				}
+//
+//				// Resolve the controller
+//				if ($parts[1] == ACL::KEY_WILDCARD)
+//				{
+//					$parts[1] = $scope['controller'];
+//				}
+//
+//				// Resolve the action
+//				if ($parts[2] == ACL::KEY_WILDCARD)
+//				{
+//					$parts[2] = $scope['action'];
+//				}
+//
+//				// Put the key back together
+//				$rule_key = ACL::key($parts);
+//
+//				// Create a key for the scope
+//				$scope_key = ACL::key($scope);
+//
+//				// If the rule is in auto mode and it applies to the current scope, resolve the capability name
+//				if ($rule->in_auto_mode() AND $rule_key === $scope_key)
+//				{
+//					$rule->auto_capability($scope['controller'], $scope['action']);
+//				}
+//			}
+//
+//			$resolved[$rule_key] = $rule;
+//		}
+//
+//		// Replace the keys with the resolved ones
+//		self::$_rules = $resolved;
+//	}
 
 
 
@@ -210,10 +209,10 @@ class Kohana_ACL {
 	 */
 	protected $user = NULL;
 
-	/**
-	 * @var  array  Contains the compiled rule that will apply to the user
-	 */
-	protected $rule = NULL;
+//	/**
+//	 * @var  array  Contains the compiled rule that will apply to the user
+//	 */
+//	protected $rule = NULL;
 
 	/**
 	 * Constructs a new ACL object for a request
@@ -232,25 +231,6 @@ class Kohana_ACL {
 		{
 			$this->user = ORM::factory('user');
 		}
-
-		// Initialize the rule
-		$this->initialize_rule();
-	}
-
-	/**
-	 * Returns the "scope" of this request. These values help determine which
-	 * ACL rule applies to the user
-	 *
-	 * @return  array
-	 */
-	public function scope()
-	{
-		return array
-		(
-			'directory'  => $this->request->directory,
-			'controller' => $this->request->controller,
-			'action'     => $this->request->action,
-		);
 	}
 
 	/**
@@ -261,38 +241,20 @@ class Kohana_ACL {
 	public function authorize()
 	{
 		// Compile the rules
-		$this->compile();
+		$rule = $this->compile_rules();
 			
 		// Check if this user has access to this request
-		if ($this->user_authorized())
+		if ($rule->authorize_user($this->user))
 			return TRUE;
 
 		// Set the HTTP status to 403 - Access Denied
 		$this->request->status = 403;
 
 		// Execute the callback (if any) from the compiled rule
-		$this->perform_callback();
+		$rule->perform_callback($this->user);
 
 		// Throw a 403 Exception if no callback has altered program flow
-		throw new Kohana_Request_Exception('You are not authorized to access this resource.', NULL, 403);
-	}
-	
-	/**
-	 * Initialize the compiled rule to be empty
-	 *
-	 * @return  ACL
-	 */
-	public function initialize_rule()
-	{
-		$this->rule = array
-		(
-			'roles'        => array(),
-			'capabilities' => array(),
-			'users'        => array(),
-			'callbacks'    => array(),
-		);
-		
-		return $this;
+		throw new Kohana_ACL_Exception('You are not authorized to access this resource.', NULL, 403);
 	}
 
 	/**
@@ -312,6 +274,7 @@ class Kohana_ACL {
 		$super_role = Kohana::config('acl.super_role');
 		if ($super_role AND in_array($super_role, $this->user->roles_list()))
 			return TRUE;
+
 		// If the user is in the user list, then allow access
 		if (in_array($this->user->id, $this->rule['users']))
 			return TRUE;
@@ -333,25 +296,11 @@ class Kohana_ACL {
 		return FALSE;
 	}
 
-	/**
-	 * Performs a matching callback as defined in he compiled rule. It looks at
-	 * all the callbacks and executes the first one that matches the user's
-	 * role or the default callback if defined. Otherwise, it does nothing.
-	 *
-	 * @return  void
-	 */
-	protected function perform_callback()
-	{		
-		// Loop through the callbacks
-		foreach ($this->rule['callbacks'] as $role => $callback)
-		{
-			// If the user matches the role (or it's a default), execute it
-			if ($role === ACL::CALLBACK_DEFAULT OR $this->user->is_a($role))
-			{
-				call_user_func_array($callback['function'], $callback['args']);
-				return;
-			}
-		}
+	protected function compile_rules()
+	{
+
+		
+
 	}
 
 	/**
@@ -359,7 +308,7 @@ class Kohana_ACL {
 	 *
 	 * @return  void
 	 */
-	protected function compile()
+	protected function old_compile_rules()
 	{
 		// Initialize an array for the applicable rules
 		$applicable_rules = array();
@@ -404,6 +353,3 @@ class Kohana_ACL {
 	}
 
 } // End ACL
-
-// ACL Exception
-class ACL_Exception extends Kohana_Exception {}
