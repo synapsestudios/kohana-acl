@@ -46,7 +46,7 @@ class Kohana_ACL_Rule {
 	/**
 	 * @var  integer  Indicates how specific a rule is 
 	 */
-	public $specificity     = 0;
+	protected $specificity  = 0;
 
 	/**
 	 * Sets the directory for which the rule applies
@@ -242,7 +242,22 @@ class Kohana_ACL_Rule {
 	}
 
 	/**
-	 * Determines if the rule is valid.
+	 * Returns the specificity of the rule
+	 *
+	 * @return  integer
+	 */
+	public function specificity($specificity = NULL)
+	{
+		if (is_int($specificity))
+		{
+			$this->specificity = $specificity;
+		}
+
+		return $this->specificity;
+	}
+
+	/**
+	 * Determines if the rule is valid
 	 *
 	 * @return  boolean
 	 */
@@ -257,6 +272,12 @@ class Kohana_ACL_Rule {
 		return TRUE;
 	}
 
+	/**
+	 * Determines whether or not the rule applies to the specified request
+	 *
+	 * @param   Request  The request for which to test the rule
+	 * @return  boolean
+	 */
 	public function applies_to(Request $request)
 	{
 		$directory_matches  = empty($this->directory) OR $request->directory == $this->directory;
@@ -266,12 +287,21 @@ class Kohana_ACL_Rule {
 		return $directory_matches AND $controller_matches AND $action_matches;
 	}
 
+	/**
+	 * Merge another rule with this one based on specificity
+	 *
+	 * @param   ACL_Rule  The rule to merge with this one
+	 * @return  ACL_Rule
+	 */
 	public function merge_rule(ACL_Rule $rule)
 	{
-		$rule_left  = ($rule->specificity >= $this->specificity) ? $this : $rule;
-		$rule_right = ($rule->specificity >= $this->specificity) ? $rule : $this;
+		$rule_left  = ($rule->specificity() >= $this->specificity()) ? $this : $rule;
+		$rule_right = ($rule->specificity() >= $this->specificity()) ? $rule : $this;
 
-		$rule_left->specificity = max($rule_left->specificity, $rule_right->specificity);
+		$rule_left->specificity(max(
+			$rule_left->specificity(),
+			$rule_right->specificity()
+		));
 
 		if ( ! empty($rule_right->roles))
 		{
@@ -291,9 +321,38 @@ class Kohana_ACL_Rule {
 		return $rule_left;
 	}
 
+	/**
+	 * Evaluates whether or not the user is authorized based on the rule
+	 *
+	 * @param   Model_User  The user that is being authorized
+	 * @return  boolean
+	 */
 	public function authorize_user(Model_User $user)
 	{
-		
+		// If the user has the super role, then allow access
+		$super_role = Kohana::config('acl.super_role');
+		if ($super_role AND in_array($super_role, $user->roles_list()))
+			return TRUE;
+
+		// If the user is in the user list, then allow access
+		if (in_array($user->id, $this->users))
+			return TRUE;
+
+		// If the user has all (AND) the capabilities, then allow access
+		$difference = array_diff($this->capabilities, $user->capabilities_list());
+		if ( ! empty($this->capabilities) AND empty($difference))
+			return TRUE;
+
+		// If there were no capabilities allowed, check the roles
+		if (empty($this->capabilities))
+		{
+			// If the user has one (OR) the roles, then allow access
+			$intersection = array_intersect($this->roles, $user->roles_list());
+			if ( ! empty($intersection))
+				return TRUE;
+		}
+
+		return FALSE;
 	}
 
 } // End ACL Rule
