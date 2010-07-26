@@ -8,27 +8,26 @@
  */
 class Kohana_ACL {
 
-	const CALLBACK_DEFAULT = '{default}';
-
 	/**
 	 * @var  array  contains the instances (by request) of ACL
 	 */
-	protected static $instances = array();
+	protected static $instances       = array();
 
 	/**
 	 * @var  array  contains all the ACL rules
 	 */
-	protected static $rules = array();
+	protected static $rules           = array();
 
 	/**
 	 * @var  array  An array containing all valid role names
 	 */
-	public static $valid_roles = NULL;
+	public static $valid_roles        = NULL;
 
 	/**
 	 * @var  array  An array containing all valid capability names
 	 */
 	public static $valid_capabilities = NULL;
+
 
 	/**
 	 * Creates/Retrieves an instance of ACL based on the request. The first time
@@ -50,7 +49,7 @@ class Kohana_ACL {
 		}
 
 		// Get list of all capabilities
-		if (self::$valid_capabilities === NULL)
+		if (Kohana::config('acl.support_capabilities') AND self::$valid_capabilities === NULL)
 		{
 			self::$valid_capabilities = array();
 			foreach (ORM::factory('capability')->find_all() as $capability)
@@ -65,6 +64,12 @@ class Kohana_ACL {
 			$request = Request::current();
 		}
 
+		// Load rules from a file
+		if (empty(self::$rules) AND Kohana::config('acl.rule_declarations'))
+		{
+			$path = APPPATH.Kohana::config('acl.rule_declarations').EXT;
+		}
+
 		// The the current request's URI as the key for this instance
 		$key = $request->uri;
 
@@ -77,17 +82,23 @@ class Kohana_ACL {
 		return self::$instances[$key];
 	}
 
+
 	/**
 	 * Factory for an ACL rule
 	 *
 	 * @return  ACL_Rule
 	 */
-	public static function rule()
+	public static function rule(ACL_Rule $rule = NULL)
 	{
-		// Return an ACL rule
-		return self::$rules[] = new ACL_Rule;
+		if ($rule === NULL)
+		{
+			$rule = new ACL_Rule;
+		}
+
+		return self::$rules[] = $rule;
 	}
-	
+
+
 	/**
 	 * Remove all previously-added rules
 	 *
@@ -99,15 +110,18 @@ class Kohana_ACL {
 		self::$rules = array();
 	}
 
+
 	/**
 	 * @var  Request  The request object to which this instance of ACL is for
 	 */
 	protected $request = NULL;
 
+
 	/**
 	 * @var  Model_User  The current use as retreived by the Auth module
 	 */
-	protected $user = NULL;
+	protected $user    = NULL;
+
 
 	/**
 	 * Constructs a new ACL object for a request
@@ -128,6 +142,7 @@ class Kohana_ACL {
 		}
 	}
 
+
 	/**
 	 * This is the procedural method that executes ACL logic and responds
 	 *
@@ -137,6 +152,9 @@ class Kohana_ACL {
 	{
 		// Compile the rules
 		$rule = $this->compile_rules();
+
+		// Validate the request. Throws a 404 if controller or action do not exist
+		$this->validate_request();
 			
 		// Check if this user has access to this request
 		if ($rule->authorize_user($this->user))
@@ -148,9 +166,10 @@ class Kohana_ACL {
 		// Execute the callback (if any) from the compiled rule
 		$rule->perform_callback($this->user);
 
-		// Throw a 403 Exception if no callback has altered program flow
-		throw new Kohana_ACL_Exception('You are not authorized to access this resource.', NULL, 403);
+		// Throw an exception (403) if no callback has altered program flow
+		throw new Kohana_Request_Exception('You are not authorized to access this resource.', NULL, 403);
 	}
+
 
 	/**
 	 * Compliles the rule from all applicable rules to this request
@@ -159,26 +178,72 @@ class Kohana_ACL {
 	 */
 	protected function compile_rules()
 	{
-		// Find out which rules are applicable to this request
-		$applicable_rules = array();
-		foreach (self::$rules as $rules)
+		// Create a blank, base rule
+		$compiled_rule = new ACL_Rule;
+
+		// Resolve and separate multi-action rules
+		$defined_rules = self::$rules;
+		foreach ($defined_rules as $rule)
+		{
+			$rule->resolve($this->request);
+		}
+		
+		// Merge rules together that apply to this request
+		foreach (self::$rules as $rule)
 		{
 			if ($rule->valid() AND $rule->applies_to($this->request))
 			{
-				$applicable_rules[] = $rule;
+				$compiled_rule = $compiled_rule->merge($rule);
 			}
-		}
-
-		// Create a blank rule
-		$compiled_rule = new ACL_Rule;
-
-		// Merge applicable rules together
-		foreach ($applicable_rules as $rule)
-		{
-			$compiled_rule = $compiled_rule->merge_rule($rule);
 		}
 		
 		return $compiled_rule;
+	}
+
+
+	/**
+	 * This method compensates for the poor organization of the Request
+	 * execution of Kohana. Much of this code was directly copied from the
+	 * Request::execution method and is used to check if a controller and action
+	 * exist before trying to authorize a user for the request.
+	 *
+	 * @throws  Kohana_Request_Exception
+	 * @return  void
+	 */
+	public function validate_request()
+	{
+		// Create the class prefix
+		$prefix = 'controller_';
+
+		if ( ! empty($this->request->directory))
+		{
+			// Add the directory name to the class prefix
+			$prefix .= str_replace(array('\\', '/'), '_', trim($this->request->directory, '/')).'_';
+		}
+
+		try
+		{
+			// Load the controller using reflection
+			$class = new ReflectionClass($prefix.$this->request->controller);
+
+			// Create a new instance of the controller
+			$controller = $class->newInstance($this->request);
+
+			// Determine the action to use
+			$action = empty($this->request->action) 
+					? Route::$default_action
+					: $this->request->action;
+
+			// See if the action exists
+			$class->getMethod('action_'.$action);
+		}
+		catch (Exception $e)
+		{
+			$this->request->status = 404;
+
+			// Throw an exception (404) if controller or action does not exist
+			throw new Kohana_Request_Exception('The request was invalid. Either the controller or action involved with this request did not exist.', NULL, 404);
+		}
 	}
 
 } // End ACL

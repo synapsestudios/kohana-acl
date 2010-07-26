@@ -49,6 +49,10 @@ class Model_Acl_User extends Model_Auth_User {
 	 */
 	public function can($capability)
 	{
+		// Do not allow this method if capabilities are not supported
+		if (Kohana::config('acl.support_capabilities') === FALSE)
+			throw new Kohana_ACL_Exception ('Capabilities are not supported in this configuration of the ACL module.');
+
 		// If the user has the super role, they can!
 		$super_role = Kohana::config('acl.super_role');
 		if ($super_role AND $user->is_a($super_role))
@@ -66,6 +70,47 @@ class Model_Acl_User extends Model_Auth_User {
 
 		// Return whether or not they have access
 		return (bool) $user->has('capability', $capability);
+	}
+
+	/**
+	 * Checks to see if the owns a specified model. This theoretically works
+	 * for any relationship type.
+	 *
+	 * @param   ORM      The object that might be owned
+	 * @return  boolean  Whether or not the model is owned by this user
+	 */
+	public function owns(ORM $model)
+	{
+		// Get a list of all applicable relationships
+		$relationships = $model->belongs_to();
+		foreach ($model->has_many() as $alias => $has_many)
+		{
+			if ( ! empty($has_many['through']))
+			{
+				$relationships[$alias] = $has_many;
+			}
+		}
+
+		// Check each applicable relationship
+		foreach ($relationships as $alias => $relationship)
+		{
+			// Make sure the relationship is to the correct model
+			if ($relationship['model'] != $this->object_name())
+				continue;
+
+			// Check the foreign keys to verify a relationship
+			if (isset($relationship['far_key']))
+			{
+				if ($model->has($alias, $this))
+					return TRUE;
+			}
+			elseif ($model->{$relationship['foreign_key']} == $this->id)
+			{
+				return TRUE;
+			}
+		}
+
+		return FALSE;
 	}
 
 	/**
@@ -136,6 +181,10 @@ class Model_Acl_User extends Model_Auth_User {
 	 */
 	public function add_capability($capability)
 	{
+		// Do not allow this method if capabilities are not supported
+		if (Kohana::config('acl.support_capabilities') === FALSE)
+			throw new Kohana_ACL_Exception ('Capabilities are not supported in this configuration of the ACL module.');
+
 		// Get capability object
 		if ( ! $capability instanceOf Model_Capability)
 		{
@@ -147,10 +196,13 @@ class Model_Acl_User extends Model_Auth_User {
 			throw new UnexpectedValueException('Tried to assign a capability that did not exist.');
 
 		// Capabilities can only be assigned when a user has the associated role
-		if ( ! $this->has('roles', $capability->role))
-			throw new UnexpectedValueException('Tried to assign the :capability capability to a user without the required :role role.',
-				array(':capability' => $capability->name, ':role' => $capability->role->name));
-			
+		if (Kohana::config('acl.capabilties_limited_by_role'))
+		{
+			if ($capability->role_id !== NULL AND ! $this->has('roles', $capability->role))
+				throw new UnexpectedValueException('Tried to assign the :capability capability to a user without the required :role role.',
+					array(':capability' => $capability->name, ':role' => $capability->role->name));
+		}
+
 		// Add the capability to the user
 		$this->add('capabilities', $capability);
 
@@ -165,6 +217,10 @@ class Model_Acl_User extends Model_Auth_User {
 	 */
 	public function remove_capability($capability)
 	{
+		// Do not allow this method if capabilities are not supported
+		if (Kohana::config('acl.support_capabilities') === FALSE)
+			throw new Kohana_ACL_Exception ('Capabilities are not supported in this configuration of the ACL module.');
+
 		// Get capability object
 		if ( ! $capability instanceOf Model_Capability)
 		{
@@ -234,9 +290,12 @@ class Model_Acl_User extends Model_Auth_User {
 			$capabilities[$this->id] = array();
 			
 			// Get the name of all the user's capabilities
-			foreach ($this->capabilities->find_all() as $capability)
+			if (Kohana::config('acl.support_capabilities'))
 			{
-				$capabilities[$this->id][] = $capability->name;
+				foreach ($this->capabilities->find_all() as $capability)
+				{
+					$capabilities[$this->id][] = $capability->name;
+				}
 			}
 		}
 
