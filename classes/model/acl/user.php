@@ -27,8 +27,18 @@ class Model_Acl_User extends Model_Auth_User {
 	 */
 	public function is_a($role)
 	{
+		// Handle guests
+		if ($role === Kohana::config('acl.public_role'))
+		{
+			$login_role = ORM::factory('role', array('name' => 'login'));
+			if ( ! $this->loaded() OR ! $this->has('roles', $login_role))
+				return TRUE;
+			else
+				return FALSE;
+		}
+
 		// Get role object
-		if ( ! $role instanceOf Model_Role)
+		if ( ! $role instanceof Model_Role)
 		{
 			$role = ORM::factory('role', array('name' => $role));
 		}
