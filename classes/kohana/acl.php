@@ -11,75 +11,91 @@ class Kohana_ACL {
 	/**
 	 * @var  array  contains the instances (by request) of ACL
 	 */
-	protected static $instances       = array();
+	protected static $_instances = array();
 
 	/**
 	 * @var  array  contains all the ACL rules
 	 */
-	protected static $rules           = array();
+	protected static $_rules     = array();
 
 	/**
-	 * @var  array  An array containing all valid role names
+	 * @var  array  An array containing all valid items
 	 */
-	public static $valid_roles        = NULL;
-
-	/**
-	 * @var  array  An array containing all valid capability names
-	 */
-	public static $valid_capabilities = NULL;
+	public static $valid        = NULL;
 
 
 	/**
-	 * Creates/Retrieves an instance of ACL based on the request. The first time
-	 * this is called it also creates the default rule for ACL.
+	 * Creates/Retrieves an instance of ACL based on the request. The first
+	 * time this is called it also creates the default rule for ACL.
 	 *
 	 * @param   Request  The Kohana request object
 	 * @return  ACL
 	 */
-	public static function instance(Request $request = NULL)
+	public static function instance($parts = NULL)
 	{
-		// Get list of all roles
-		if (self::$valid_roles === NULL)
+		// Get list of all valid items
+		if (self::$valid === NULL)
 		{
-			self::$valid_roles = array();
+			// Setup the array
+			self::$valid = array();
+
+			// Get the valid roles
+			self::$valid['roles'] = array();
+
+			if ($public_role = Kohana::config('acl.public_role'))
+			{
+				self::$valid['roles'][] = $public_role;
+			}
+
 			foreach (ORM::factory('role')->find_all() as $role)
 			{
-				self::$valid_roles[] = $role->name;
+				self::$valid['roles'][] = $role->name;
 			}
-		}
 
-		// Get list of all capabilities
-		if (Kohana::config('acl.support_capabilities') AND self::$valid_capabilities === NULL)
-		{
-			self::$valid_capabilities = array();
-			foreach (ORM::factory('capability')->find_all() as $capability)
+			// Get the valid capabilities
+			if (Kohana::config('acl.support_capabilities'))
 			{
-				self::$valid_capabilities[] = $capability->name;
+				self::$valid['capabilities'] = array();
+				foreach (ORM::factory('capability')->find_all() as $capability)
+				{
+					self::$valid['capabilities'][] = $capability->name;
+				}
 			}
 		}
 
-		// Get the current request, if a request was not provided
-		if ($request === NULL)
+		// Get the current request parts, if the request parts were not provided
+		if ($parts === NULL)
 		{
 			$request = Request::current();
+
+			$parts = array
+			(
+				'directory'  => $request->directory,
+				'controller' => $request->controller,
+				'action'     => $request->action,
+			);
+		}
+		else
+		{
+			$parts = Arr::extract($parts, array('directory', 'controller', 'action'));
 		}
 
 		// Load rules from a file
-		if (empty(self::$rules) AND Kohana::config('acl.rule_declarations'))
+		if (empty(self::$_rules) AND Kohana::config('acl.rule_declarations'))
 		{
-			$path = APPPATH.Kohana::config('acl.rule_declarations').EXT;
+			include APPPATH.Kohana::config('acl.rule_declarations').EXT;
 		}
 
-		// The the current request's URI as the key for this instance
-		$key = $request->uri;
+		// Use the imploded request parts as the key for this instance
+		$key = implode('/', $parts);
 
 		// Register the instance if it doesn't exist
-		if ( ! isset(self::$instances[$key]))
+		if ( ! isset(self::$_instances[$key]))
 		{
-			self::$instances[$key] = new ACL($request);
+			self::$_instances[$key] = new ACL($parts);
 		}
 
-		return self::$instances[$key];
+		return self::$_instances[$key];
 	}
 
 
@@ -95,7 +111,7 @@ class Kohana_ACL {
 			$rule = new ACL_Rule;
 		}
 
-		return self::$rules[] = $rule;
+		return self::$_rules[] = $rule;
 	}
 
 
@@ -104,42 +120,57 @@ class Kohana_ACL {
 	 *
 	 * @return  void
 	 */
-	public static function clear_rules()
+	public static function clear()
 	{
 		// Remove all rules
-		self::$rules = array();
+		self::$_rules = array();
 	}
 
 
 	/**
-	 * @var  Request  The request object to which this instance of ACL is for
+	 * @var  array  The request object to which this instance of ACL is for
 	 */
-	protected $request = NULL;
+	protected $_parts = NULL;
 
 
 	/**
 	 * @var  Model_User  The current use as retreived by the Auth module
 	 */
-	protected $user    = NULL;
+	protected $_user  = NULL;
 
 
 	/**
 	 * Constructs a new ACL object for a request
 	 *
-	 * @param   Request  The request object
+	 * @param   array  The request parts
 	 * @return  void
 	 */
-	protected function __construct(Request $request)
+	protected function __construct(array $parts)
 	{
 		// Store the request for this instance
-		$this->request = $request;
+		$this->_parts = $parts;
 		
 		// Get the user (via Auth)
-		$this->user = Auth::instance()->get_user();
-		if ( ! $this->user)
-		{
-			$this->user = ORM::factory('user');
-		}
+		$this->_user = Auth::instance()->get_user() ?: ORM::factory('user');
+	}
+
+
+	/**
+	 * Check if a user is allowed to the request based on the ACL rules
+	 *
+	 * @param   Model_User  The user to allow
+	 * @return  bool
+	 */
+	public function allows_user(Model_User $user = NULL)
+	{
+		// Use the object's user, unless another is provided
+		$user = $user ?: $this->user;
+
+		// Compile the rules
+		$rule = $this->compile_rules();
+
+		// Check if this user has access to this request
+		return $rule->allows_user($user);
 	}
 
 
@@ -150,18 +181,18 @@ class Kohana_ACL {
 	 */
 	public function authorize()
 	{
-		// Compile the rules
-		$rule = $this->compile_rules();
+		// Current request
+		$request = Request::$current;
 
 		// Validate the request. Throws a 404 if controller or action do not exist
-		$this->validate_request();
+		$this->verify_request($request);
 			
 		// Check if this user has access to this request
-		if ($rule->authorize_user($this->user))
+		if ($this->allows_user($this->user))
 			return TRUE;
 
 		// Set the HTTP status to 403 - Access Denied
-		$this->request->status = 403;
+		$request->status = 403;
 
 		// Execute the callback (if any) from the compiled rule
 		$rule->perform_callback($this->user);
@@ -182,16 +213,16 @@ class Kohana_ACL {
 		$compiled_rule = new ACL_Rule;
 
 		// Resolve and separate multi-action rules
-		$defined_rules = self::$rules;
+		$defined_rules = self::$_rules;
 		foreach ($defined_rules as $rule)
 		{
-			$rule->resolve($this->request);
+			$rule->resolve($this->_parts);
 		}
 		
 		// Merge rules together that apply to this request
-		foreach (self::$rules as $rule)
+		foreach (self::$_rules as $rule)
 		{
-			if ($rule->valid() AND $rule->applies_to($this->request))
+			if ($rule->valid() AND $rule->applies_to($this->_parts))
 			{
 				$compiled_rule = $compiled_rule->merge($rule);
 			}
@@ -210,36 +241,34 @@ class Kohana_ACL {
 	 * @throws  Kohana_Request_Exception
 	 * @return  void
 	 */
-	public function validate_request()
+	public function verify_request(Request $request)
 	{
 		// Create the class prefix
 		$prefix = 'controller_';
 
-		if ( ! empty($this->request->directory))
+		if ( ! empty($request->directory))
 		{
 			// Add the directory name to the class prefix
-			$prefix .= str_replace(array('\\', '/'), '_', trim($this->request->directory, '/')).'_';
+			$prefix .= str_replace(array('\\', '/'), '_', trim($request->directory, '/')).'_';
 		}
 
 		try
 		{
 			// Load the controller using reflection
-			$class = new ReflectionClass($prefix.$this->request->controller);
+			$class = new ReflectionClass($prefix.$request->controller);
 
 			// Create a new instance of the controller
-			$controller = $class->newInstance($this->request);
+			$controller = $class->newInstance($request);
 
 			// Determine the action to use
-			$action = empty($this->request->action) 
-					? Route::$default_action
-					: $this->request->action;
+			$action = $request->action ?: Route::$default_action;
 
 			// See if the action exists
 			$class->getMethod('action_'.$action);
 		}
 		catch (Exception $e)
 		{
-			$this->request->status = 404;
+			$request->status = 404;
 
 			// Throw an exception (404) if controller or action does not exist
 			throw new Kohana_Request_Exception('The request was invalid. Either the controller or action involved with this request did not exist.', NULL, 404);

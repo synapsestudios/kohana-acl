@@ -116,8 +116,7 @@ class Kohana_ACL_Rule {
 	public function allow_all()
 	{
 		// Add all roles (including public)
-		$this->roles   = ACL::$valid_roles;
-		$this->roles[] = Kohana::config('acl.public_role');
+		$this->roles = ACL::$valid['roles'];
 
 		return $this;
 	}
@@ -135,7 +134,7 @@ class Kohana_ACL_Rule {
 		$roles = func_get_args();
 
 		// Check for invalid roles
-		$invalid = array_diff($roles, ACL::$valid_roles);
+		$invalid = array_diff($roles, ACL::$valid['roles']);
 		if ( ! empty($invalid))
 			throw new Kohana_ACL_Exception ('An invalid role, :role, was added to an ACL rule.',
 				array(':role' => $invalid[0]));
@@ -157,13 +156,13 @@ class Kohana_ACL_Rule {
 	{
 		// Do not allow this method if capabilities are not supported
 		if (Kohana::config('acl.support_capabilities') === FALSE)
-			throw new Kohana_ACL_Exception ('Capabilities are not supported in this configuration of the ACL module.');
+			throw new Kohana_ACL_Exception('Capabilities are not supported in this configuration of the ACL module.');
 
 		// Allow for multiple capabilities
 		$capabilities = func_get_args();
 
 		// Check for invalid capabilities
-		$invalid = array_diff($capabilities, ACL::$valid_capabilities);
+		$invalid = array_diff($capabilities, ACL::$valid['capabilities']);
 		if ( ! empty($invalid))
 			throw new Kohana_ACL_Exception ('An invalid capability, :capability, was added to an ACL rule.',
 				array(':capability' => $invalid[0]));
@@ -398,11 +397,11 @@ class Kohana_ACL_Rule {
 	 * @param   Request  The request for which to test the rule
 	 * @return  boolean
 	 */
-	public function applies_to(Request $request)
+	public function applies_to(array $parts)
 	{
-		$directory_matches  = empty($this->directory)  OR $request->directory == $this->directory;
-		$controller_matches = empty($this->controller) OR $request->controller == $this->controller;
-		$action_matches     = empty($this->action)     OR $request->action == $this->action;
+		$directory_matches  = empty($this->directory)  OR $parts['directory'] == $this->directory;
+		$controller_matches = empty($this->controller) OR $parts['controller'] == $this->controller;
+		$action_matches     = empty($this->action)     OR $parts['action'] == $this->action;
 
 		return $directory_matches AND $controller_matches AND $action_matches;
 	}
