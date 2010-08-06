@@ -67,7 +67,7 @@ class Kohana_ACL_Rule {
 	{
 		$this->directory = $directory;
 
-		$this->specificity++;
+		$this->specificity += 1;
 		
 		return $this;
 	}
@@ -83,7 +83,7 @@ class Kohana_ACL_Rule {
 	{
 		$this->controller = $controller;
 
-		$this->specificity++;
+		$this->specificity += 2;
 
 		return $this;
 	}
@@ -102,7 +102,7 @@ class Kohana_ACL_Rule {
 
 		$this->action = array_merge($this->action, $actions);
 
-		$this->specificity++;
+		$this->specificity += 3;
 
 		return $this;
 	}
