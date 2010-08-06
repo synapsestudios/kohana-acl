@@ -399,11 +399,11 @@ class Kohana_ACL_Rule {
 	 */
 	public function applies_to(array $parts)
 	{
-		$directory_matches  = empty($this->directory)  OR $parts['directory'] == $this->directory;
-		$controller_matches = empty($this->controller) OR $parts['controller'] == $this->controller;
-		$action_matches     = empty($this->action)     OR $parts['action'] == $this->action;
+		$directory_matches  = (empty($this->directory) OR $parts['directory'] == $this->directory);
+		$controller_matches = (empty($this->controller) OR $parts['controller'] == $this->controller);
+		$action_matches     = (empty($this->action) OR $parts['action'] == $this->action);
 
-		return $directory_matches AND $controller_matches AND $action_matches;
+		return (bool) ($directory_matches AND $controller_matches AND $action_matches);
 	}
 
 
