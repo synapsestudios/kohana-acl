@@ -445,7 +445,7 @@ class Kohana_ACL_Rule {
 	 * @param   Model_User  The user that is being authorized
 	 * @return  boolean
 	 */
-	public function authorize_user(Model_User $user)
+	public function allows_user(Model_User $user)
 	{
 		// If the user has the super role, then allow access
 		$super_role = Kohana::config('acl.super_role');
