@@ -80,12 +80,6 @@ class Kohana_ACL {
 			$parts = Arr::extract($parts, array('directory', 'controller', 'action'));
 		}
 
-		// Load rules from a file
-		if (empty(self::$_rules) AND Kohana::config('acl.rule_declarations'))
-		{
-			include APPPATH.Kohana::config('acl.rule_declarations').EXT;
-		}
-
 		// Use the imploded request parts as the key for this instance
 		$key = implode('/', $parts);
 

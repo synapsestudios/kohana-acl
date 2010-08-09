@@ -13,11 +13,6 @@ return array
 	'super_role'                   => 'developer',
 
 	/**
-	 * The path to the rule declarations file (from APPPATH)
-	 */
-	'rule_declarations'            => 'acl',
-
-	/**
 	 * `TRUE` if your application is using capabilities
 	 */
 	'support_capabilities'         => TRUE,
