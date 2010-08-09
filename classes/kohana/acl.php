@@ -33,35 +33,8 @@ class Kohana_ACL {
 	 */
 	public static function instance($parts = NULL)
 	{
-		// Get list of all valid items
-		if (self::$valid === NULL)
-		{
-			// Setup the array
-			self::$valid = array();
-
-			// Get the valid roles
-			self::$valid['roles'] = array();
-
-			if ($public_role = Kohana::config('acl.public_role'))
-			{
-				self::$valid['roles'][] = $public_role;
-			}
-
-			foreach (ORM::factory('role')->find_all() as $role)
-			{
-				self::$valid['roles'][] = $role->name;
-			}
-
-			// Get the valid capabilities
-			if (Kohana::config('acl.support_capabilities'))
-			{
-				self::$valid['capabilities'] = array();
-				foreach (ORM::factory('capability')->find_all() as $capability)
-				{
-					self::$valid['capabilities'][] = $capability->name;
-				}
-			}
-		}
+		// Initialize the $valid array
+		self::_initialize_valid_items();
 
 		// Get the current request parts, if the request parts were not provided
 		if ($parts === NULL)
@@ -100,11 +73,16 @@ class Kohana_ACL {
 	 */
 	public static function rule(ACL_Rule $rule = NULL)
 	{
+		// Initialize the $valid array
+		self::_initialize_valid_items();
+
+		// If no rule provided, use a new, blank one
 		if ($rule === NULL)
 		{
 			$rule = new ACL_Rule;
 		}
 
+		// Return the rule after storing in the rules array
 		return self::$_rules[] = $rule;
 	}
 
@@ -118,6 +96,43 @@ class Kohana_ACL {
 	{
 		// Remove all rules
 		self::$_rules = array();
+	}
+
+
+	/**
+	 * Initializes the `$valid` array for the rules.
+	 */
+	protected static function _initialize_valid_items()
+	{
+		// Get list of all valid items
+		if (self::$valid === NULL)
+		{
+			// Setup the array
+			self::$valid = array();
+
+			// Get the valid roles
+			self::$valid['roles'] = array();
+
+			if ($public_role = Kohana::config('acl.public_role'))
+			{
+				self::$valid['roles'][] = $public_role;
+			}
+
+			foreach (ORM::factory('role')->find_all() as $role)
+			{
+				self::$valid['roles'][] = $role->name;
+			}
+
+			// Get the valid capabilities
+			if (Kohana::config('acl.support_capabilities'))
+			{
+				self::$valid['capabilities'] = array();
+				foreach (ORM::factory('capability')->find_all() as $capability)
+				{
+					self::$valid['capabilities'][] = $capability->name;
+				}
+			}
+		}
 	}
 
 
