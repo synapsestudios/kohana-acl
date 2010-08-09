@@ -173,7 +173,7 @@ class Kohana_ACL {
 	public function allows_user(Model_User $user = NULL)
 	{
 		// Use the object's user, unless another is provided
-		$user = $user ?: $this->user;
+		$user = $user ?: $this->_user;
 
 		// Compile the rules
 		$rule = $this->compile_rules();
@@ -190,6 +190,9 @@ class Kohana_ACL {
 	 */
 	public function authorize()
 	{
+		// Initialize request if this hasn't happened yet
+		Request::instance();
+
 		// Current request
 		$request = Request::$current;
 
@@ -197,14 +200,14 @@ class Kohana_ACL {
 		$this->verify_request($request);
 			
 		// Check if this user has access to this request
-		if ($this->allows_user($this->user))
+		if ( ! empty(self::$_rules) && $this->allows_user($this->_user))
 			return TRUE;
 
 		// Set the HTTP status to 403 - Access Denied
 		$request->status = 403;
 
 		// Execute the callback (if any) from the compiled rule
-		$rule->perform_callback($this->user);
+		$rule->perform_callback($this->_user);
 
 		// Throw an exception (403) if no callback has altered program flow
 		throw new Kohana_Request_Exception('You are not authorized to access this resource.', NULL, 403);

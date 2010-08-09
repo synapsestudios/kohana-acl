@@ -14,27 +14,27 @@ class Kohana_ACL_Rule {
 	/**
 	 * @var  boolean  TRUE if the rule needs to be resolved with a capability
 	 */
-	protected $auto_mode = '';
+	protected $_auto_mode = '';
 
 	/**
 	 * @var  string  The requested directory
 	 */
-	protected $directory = '';
+	protected $_directory = '';
 
 	/**
 	 * @var  string  The requested controller
 	 */
-	protected $controller = '';
+	protected $_controller = '';
 
 	/**
 	 * @var  string  The requested action
 	 */
-	protected $action = array();
+	protected $_action = array();
 
 	/**
 	 * @var  array  An array of all added callbacks
 	 */
-	protected $callbacks = array();
+	protected $_callbacks = array();
 
 	/**
 	 * @var  array  An array of all added roles
@@ -65,7 +65,7 @@ class Kohana_ACL_Rule {
 	 */
 	public function for_directory($directory)
 	{
-		$this->directory = $directory;
+		$this->_directory = $directory;
 
 		$this->specificity += 1;
 		
@@ -81,7 +81,7 @@ class Kohana_ACL_Rule {
 	 */
 	public function for_controller($controller)
 	{
-		$this->controller = $controller;
+		$this->_controller = $controller;
 
 		$this->specificity += 2;
 
@@ -100,7 +100,7 @@ class Kohana_ACL_Rule {
 		// Allow for multiple actions
 		$actions = func_get_args();
 
-		$this->action = array_merge($this->action, $actions);
+		$this->_action = array_merge($this->_action, $actions);
 
 		$this->specificity += 3;
 
@@ -228,13 +228,13 @@ class Kohana_ACL_Rule {
 			throw new Kohana_ACL_Exception ('Capabilities are not supported in this configuration of the ACL module.');
 
 		// Make sure the controller and action are set
-		if (empty($this->action))
+		if (empty($this->_action))
 		{
 			$this->for_action(ACL_Rule::CURRENT_ACTION);
 		}
 
 		// Set auto mode to TRUE to the capability can be resolved later
-		$this->auto_mode = TRUE;
+		$this->_auto_mode = TRUE;
 
 		return $this;
 	}
@@ -249,13 +249,13 @@ class Kohana_ACL_Rule {
 	protected function resolve_capability()
 	{
 		// Only run this method if in auto mode and capabilities are supported
-		if ( ! $this->auto_mode OR Kohana::config('acl.support_capabilities') === FALSE)
+		if ( ! $this->_auto_mode OR Kohana::config('acl.support_capabilities') === FALSE)
 			return;
 
 		// Get capability associated with this request
 		$capability_name = strtolower(str_ireplace(
 			array('{controller}', '{action}'),
-			array($this->controller, $this->action),
+			array($this->_controller, $this->_action),
 			Kohana::config('acl.auto_format')
 		));
 
@@ -273,7 +273,7 @@ class Kohana_ACL_Rule {
 	 */
 	public function set_action($action)
 	{
-		$this->action = $action;
+		$this->_action = $action;
 
 		return $this;
 	}
@@ -295,7 +295,7 @@ class Kohana_ACL_Rule {
 		
 		// Add the callback to the callbacks list
 		$role = empty($role) ? ACL_Rule::DEFAULT_CALLBACK : $role;
-		$this->callbacks[$role] = array
+		$this->_callbacks[$role] = array
 		(
 			'function' => $function,
 			'args'     => $args,
@@ -315,7 +315,7 @@ class Kohana_ACL_Rule {
 	public function perform_callback(Model_User $user)
 	{
 		// Loop through the callbacks
-		foreach ($this->callbacks as $role => $callback)
+		foreach ($this->_callbacks as $role => $callback)
 		{
 			// If the user matches the role (or it's a default), execute it
 			if ($role === ACL_Rule::DEFAULT_CALLBACK OR $user->is_a($role))
@@ -332,10 +332,10 @@ class Kohana_ACL_Rule {
 	 * @param   Request  The current request
 	 * @return  void
 	 */
-	public function resolve(Request $request)
+	public function resolve(array $parts)
 	{
 		// Get all of the actions
-		$actions = $this->action;
+		$actions = $this->_action;
 
 		// If no actions, then set to empty and be done
 		if (empty($actions))
@@ -348,9 +348,10 @@ class Kohana_ACL_Rule {
 		$this->set_action(array_shift($actions));
 
 		// Handle the special "cuurent action" case for `allow_auto`
-		if ($this->action == ACL_Rule::CURRENT_ACTION)
+		if ($this->_action == ACL_Rule::CURRENT_ACTION)
 		{
-			$this->set_action($request->action);
+			$request_action = Arr::get($parts, 'action');
+			$this->set_action($request_action);
 		}
 
 		// Resolve capability for `allow_auto`
@@ -382,9 +383,9 @@ class Kohana_ACL_Rule {
 	public function valid()
 	{
 		// If an action is defined, a controller must also be defined
-		if ( ! empty($this->action))
+		if ( ! empty($this->_action))
 		{
-			return ! empty($this->controller);
+			return ! empty($this->_controller);
 		}
 		
 		return TRUE;
@@ -399,9 +400,9 @@ class Kohana_ACL_Rule {
 	 */
 	public function applies_to(array $parts)
 	{
-		$directory_matches  = (empty($this->directory) OR $parts['directory'] == $this->directory);
-		$controller_matches = (empty($this->controller) OR $parts['controller'] == $this->controller);
-		$action_matches     = (empty($this->action) OR $parts['action'] == $this->action);
+		$directory_matches  = (empty($this->_directory) OR $parts['directory'] == $this->_directory);
+		$controller_matches = (empty($this->_controller) OR $parts['controller'] == $this->_controller);
+		$action_matches     = (empty($this->_action) OR $parts['action'] == $this->_action);
 
 		return (bool) ($directory_matches AND $controller_matches AND $action_matches);
 	}
