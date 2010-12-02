@@ -38,7 +38,7 @@ class Model_Acl_User extends Model_Auth_User {
 			throw new ACL_Exception('Tried to check for a role that did not exist.');
 
 		// Return whether or not they have the role
-		return (bool) $user->has('role', $role);
+		return (bool) $this->has('roles', $role);
 	}
 
 	/**
@@ -62,7 +62,7 @@ class Model_Acl_User extends Model_Auth_User {
 		
 		// If object failed to load then throw exception
 		if ( ! $capability->loaded())
-			throw new Exception('Tried to check for a capability that did not exist.');
+			throw new ACL_Exception('Tried to check for a capability that did not exist.');
 
 		// Return whether or not they have access
 		return (bool) $user->has('capability', $capability);
@@ -144,8 +144,13 @@ class Model_Acl_User extends Model_Auth_User {
 
 		// If object failed to load then throw exception
 		if ( ! $capability->loaded())
-			throw new Exception('Tried to assign a capability that did not exist.');
+			throw new ACL_Exception('Tried to assign a capability that did not exist.');
 
+		// Capabilities can only be assigned when a user has the associated role
+		if ( ! $this->has('roles', $capability->role))
+			throw new ACL_Exception('Tried to assign the :capability capability to a user without the required :role role.',
+				array(':capability' => $capability->name, ':role' => $capability->role->name));
+			
 		// Add the capability to the user
 		$this->add('capabilities', $capability);
 
@@ -168,7 +173,7 @@ class Model_Acl_User extends Model_Auth_User {
 
 		// If object failed to load then throw exception
 		if ( ! $capability->loaded())
-			throw new Exception('Tried to remove a capability that did not exist.');
+			throw new ACL_Exception('Tried to remove a capability that did not exist.');
 
 		// Add the capability to the user
 		$this->remove('capabilities', $capability);
@@ -187,23 +192,26 @@ class Model_Acl_User extends Model_Auth_User {
 		static $roles = array();
 
 		// Construct the roles list
-		if ($reload OR empty($roles))
+		if ($reload OR ! isset($roles[$this->id]))
 		{
+			// Create array of roles for this user
+			$roles[$this->id] = array();
+		
 			// See if the user is logged in or not
 			if ( ! Auth::instance()->logged_in())
 			{
-				$roles[] = Kohana::config('acl.public_role');
-				return $roles;
+				$roles[$this->id][] = Kohana::config('acl.public_role');
+				return $roles[$this->id];
 			}
 
 			// Get the name of all the user's roles
 			foreach ($this->roles->find_all() as $role)
 			{
-				$roles[] = $role->name;
+				$roles[$this->id][] = $role->name;
 			}
 		}
 
-		return $roles;
+		return Arr::get($roles, $this->id, array());
 	}
 
 	/**
@@ -220,16 +228,19 @@ class Model_Acl_User extends Model_Auth_User {
 		$authenticated = Auth::instance()->logged_in();
 
 		// Construct the capabilities list
-		if ($reload OR ($authenticated AND empty($capabilities)))
+		if ($reload OR ($authenticated AND ! isset($capabilities[$this->id])))
 		{
+			// Create array of capabilities for this user
+			$capabilities[$this->id] = array();
+			
 			// Get the name of all the user's capabilities
 			foreach ($this->capabilities->find_all() as $capability)
 			{
-				$capabilities[] = $capability->name;
+				$capabilities[$this->id][] = $capability->name;
 			}
 		}
 
-		return $capabilities;
+		return Arr::get($capabilities, $this->id, array());
 	}
 
 } // End User Model
