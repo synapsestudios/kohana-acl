@@ -2,9 +2,9 @@
 
 *ACL module from Kohana 3.x*
 
-- **Module Versions:** 0.9
+- **Module Versions:** 0.9.0
 - **Module URL:** <http://github.com/synapsestudios/kohana-acl>
-- **Compatible Kohana Version(s):** 3.0
+- **Compatible Kohana Version(s):** 3.0.x
 
 ## Description
 
