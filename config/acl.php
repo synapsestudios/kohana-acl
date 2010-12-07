@@ -5,26 +5,26 @@ return array
 	/**
 	 * The name of the pseudo-role that represents non-logged in users
 	 */
-	'public_role'                  => 'guest',
+	'public_role' => 'guest',
 
 	/**
 	 * The name of the role that represents complete access
 	 */
-	'super_role'                   => 'developer',
+	'super_role' => 'developer',
 
 	/**
 	 * `TRUE` if your application is using capabilities
 	 */
-	'support_capabilities'         => TRUE,
+	'support_capabilities' => TRUE,
 
 	/**
 	 * `TRUE` if a user must have an associated role to have a capability
 	 */
-	'capabilties_limited_by_role'  => FALSE,
+	'capabilties_limited_by_role' => FALSE,
 
 	/**
 	 * The format of capability names
 	 */
-	'auto_format'                  => '{action}-{controller}',
+	'auto_format' => '{action}-{controller}',
 	
 );

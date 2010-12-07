@@ -4,6 +4,7 @@
  *
  * @package    ACL
  * @author     Synapse Studios
+ * @author     Jeremy Lindblom <jeremy@synapsestudios.com>
  * @copyright  (c) 2010 Synapse Studios
  */
 class Kohana_ACL_Rule {

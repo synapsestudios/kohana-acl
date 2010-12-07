@@ -4,6 +4,7 @@
  *
  * @package    ACL
  * @author     Synapse Studios
+ * @author     Jeremy Lindblom <jeremy@synapsestudios.com>
  * @copyright  (c) 2010 Synapse Studios
  */
 class Kohana_ACL {
@@ -21,14 +22,13 @@ class Kohana_ACL {
 	/**
 	 * @var  array  An array containing all valid items
 	 */
-	public static $valid        = NULL;
+	public static $valid         = NULL;
 
 
 	/**
-	 * Creates/Retrieves an instance of ACL based on the request. The first
-	 * time this is called it also creates the default rule for ACL.
+	 * Creates/Retrieves an instance of ACL based on a request. 
 	 *
-	 * @param   Request  The Kohana request object
+	 * @param   mixed  The Request object, or an array of request parts
 	 * @return  ACL
 	 */
 	public static function instance($parts = NULL)
@@ -36,11 +36,10 @@ class Kohana_ACL {
 		// Initialize the $valid array
 		self::_initialize_valid_items();
 
-		// Get the current request parts, if the request parts were not provided
+		// Get the request parts, if they were not provided
 		if ($parts === NULL)
 		{
 			$request = Request::current();
-
 			$parts = array
 			(
 				'directory'  => $request->directory,
@@ -67,7 +66,7 @@ class Kohana_ACL {
 
 
 	/**
-	 * Factory for an ACL rule
+	 * Factory for an ACL rule. Stores it in the rules array, automatically.
 	 *
 	 * @return  ACL_Rule
 	 */
@@ -100,7 +99,9 @@ class Kohana_ACL {
 
 
 	/**
-	 * Initializes the `$valid` array for the rules.
+	 * Initializes the `$valid` arrays for roles and capabilities.
+	 *
+	 * @return  void
 	 */
 	protected static function _initialize_valid_items()
 	{
@@ -167,8 +168,11 @@ class Kohana_ACL {
 	/**
 	 * Check if a user is allowed to the request based on the ACL rules
 	 *
+	 *     $uri_parts = array('controller' => 'account', 'action' => 'update');
+	 *     $allowed   = ACL::instance($uri_parts)->allows_user($user);
+	 *
 	 * @param   Model_User  The user to allow
-	 * @return  bool
+	 * @return  boolean
 	 */
 	public function allows_user(Model_User $user = NULL)
 	{
@@ -176,7 +180,7 @@ class Kohana_ACL {
 		$user = $user ?: $this->_user;
 
 		// Compile the rules
-		$rule = $this->compile_rules();
+		$rule = $this->_compile_rules();
 
 		// Check if this user has access to this request
 		return $rule->allows_user($user);
@@ -184,9 +188,12 @@ class Kohana_ACL {
 
 
 	/**
-	 * This is the procedural method that executes ACL logic and responds
+	 * This is the procedural method that executes ACL logic and responses
 	 *
-	 * @return  void
+	 * @return  boolean
+	 * @throws  Kohana_Request_Exception
+	 * @uses    ACL::allows_user
+	 * @uses    ACL::verify_request
 	 */
 	public function authorize()
 	{
@@ -194,7 +201,7 @@ class Kohana_ACL {
 		Request::instance();
 
 		// Current request
-		$request = Request::$current;
+		$request = Request::current();
 
 		// Validate the request. Throws a 404 if controller or action do not exist
 		$this->verify_request($request);
@@ -219,7 +226,7 @@ class Kohana_ACL {
 	 *
 	 * @return  ACL_Rule  The compiled rule
 	 */
-	protected function compile_rules()
+	protected function _compile_rules()
 	{
 		// Create a blank, base rule
 		$compiled_rule = new ACL_Rule;
@@ -250,8 +257,8 @@ class Kohana_ACL {
 	 * Request::execution method and is used to check if a controller and action
 	 * exist before trying to authorize a user for the request.
 	 *
-	 * @throws  Kohana_Request_Exception
 	 * @return  void
+	 * @throws  Kohana_Request_Exception
 	 */
 	public function verify_request(Request $request)
 	{
