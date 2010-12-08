@@ -125,9 +125,9 @@ class Kohana_ACL_Rule {
 		$roles = func_get_args();
 
 		// Check for invalid roles
-		$invalid = array_diff($roles, ACL::$valid['roles']);
+		$invalid = array_values(array_diff($roles, ACL::$valid['roles']));
 		if ( ! empty($invalid))
-			throw new Kohana_ACL_Exception ('":role" is an invalid role, and cannot be added to an ACL rule.',
+			throw new Kohana_ACL_Exception('":role" is an invalid role, and cannot be added to an ACL rule.',
 				array(':role' => $invalid[0]));
 
 		// Add these roles to the current set
