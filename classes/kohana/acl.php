@@ -24,7 +24,6 @@ class Kohana_ACL {
 	 */
 	public static $valid         = NULL;
 
-
 	/**
 	 * Creates/Retrieves an instance of ACL based on a request. 
 	 *
@@ -64,7 +63,6 @@ class Kohana_ACL {
 		return self::$_instances[$key];
 	}
 
-
 	/**
 	 * Factory for an ACL rule. Stores it in the rules array, automatically.
 	 *
@@ -85,7 +83,6 @@ class Kohana_ACL {
 		return self::$_rules[] = $rule;
 	}
 
-
 	/**
 	 * Remove all previously-added rules
 	 *
@@ -96,7 +93,6 @@ class Kohana_ACL {
 		// Remove all rules
 		self::$_rules = array();
 	}
-
 
 	/**
 	 * Initializes the `$valid` arrays for roles and capabilities.
@@ -136,18 +132,15 @@ class Kohana_ACL {
 		}
 	}
 
-
 	/**
 	 * @var  array  The request object to which this instance of ACL is for
 	 */
 	protected $_parts = NULL;
 
-
 	/**
 	 * @var  Model_User  The current use as retreived by the Auth module
 	 */
 	protected $_user  = NULL;
-
 
 	/**
 	 * Constructs a new ACL object for a request
@@ -163,7 +156,6 @@ class Kohana_ACL {
 		// Get the user (via Auth)
 		$this->_user = Auth::instance()->get_user() ?: ORM::factory('user');
 	}
-
 
 	/**
 	 * Check if a user is allowed to the request based on the ACL rules
@@ -185,7 +177,6 @@ class Kohana_ACL {
 		// Check if this user has access to this request
 		return $rule->allows_user($user);
 	}
-
 
 	/**
 	 * This is the procedural method that executes ACL logic and responses
@@ -220,7 +211,6 @@ class Kohana_ACL {
 		throw new Kohana_Request_Exception('You are not authorized to access this resource.', NULL, 403);
 	}
 
-
 	/**
 	 * Compliles the rule from all applicable rules to this request
 	 *
@@ -249,7 +239,6 @@ class Kohana_ACL {
 		
 		return $compiled_rule;
 	}
-
 
 	/**
 	 * This method compensates for the poor organization of the Request

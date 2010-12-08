@@ -8,8 +8,6 @@
  * @copyright  (c) 2010 Synapse Studios
  */
 class Model_Acl_User extends Model_Auth_User {
-
-	// Relationships
 	
 	protected $_has_many = array
 	(
@@ -18,8 +16,6 @@ class Model_Acl_User extends Model_Auth_User {
 		'capabilities' => array('model' => 'capability', 'through' => 'capabilities_users'),
 	);
 	
-	// ACL-related methods
-
 	/**
 	 * Determines whether or not a user has (is) a particular role
 	 *
@@ -251,66 +247,49 @@ class Model_Acl_User extends Model_Auth_User {
 	/**
 	 * Retrieves a list of the names of the roles a user has
 	 *
-	 * @param   boolean  If TRUE, then re-query the database for this list
 	 * @return  array
 	 */
-	public function roles_list($reload = FALSE)
+	public function roles_list()
 	{
-		static $roles = array();
-
-		// Construct the roles list
-		if ($reload OR ! isset($roles[$this->id]))
+		// Create array of roles for this user
+		$roles = array();
+	
+		// See if the user is logged in or not
+		if ( ! Auth::instance()->logged_in())
 		{
-			// Create array of roles for this user
-			$roles[$this->id] = array();
-		
-			// See if the user is logged in or not
-			if ( ! Auth::instance()->logged_in())
-			{
-				$roles[$this->id][] = Kohana::config('acl.public_role');
-				return $roles[$this->id];
-			}
-
-			// Get the name of all the user's roles
-			foreach ($this->roles->find_all() as $role)
-			{
-				$roles[$this->id][] = $role->name;
-			}
+			$roles[] = Kohana::config('acl.public_role');
+			return $roles;
 		}
 
-		return Arr::get($roles, $this->id, array());
+		// Get the name of all the user's roles
+		foreach ($this->roles->find_all() as $role)
+		{
+			$roles[] = $role->name;
+		}
+
+		return $roles;
 	}
 
 	/**
 	 * Retrieves a list of the names of the capabilities a user has
 	 *
-	 * @param   boolean  If TRUE, then re-query the database for this list
-	 * @return  array
+	 * @return  array  list of capabilties
 	 */
-	public function capabilities_list($reload = FALSE)
+	public function capabilities_list()
 	{
-		static $capabilities = array();
-
-		// Check for authentication
-		$authenticated = Auth::instance()->logged_in();
-
-		// Construct the capabilities list
-		if ($reload OR ($authenticated AND ! isset($capabilities[$this->id])))
-		{
-			// Create array of capabilities for this user
-			$capabilities[$this->id] = array();
+		// Create array of capabilities for the user
+		$capabilities = array();
 			
-			// Get the name of all the user's capabilities
-			if (Kohana::config('acl.support_capabilities'))
+		// Get the name of all the user's capabilities
+		if (Auth::instance()->logged_in() AND Kohana::config('acl.support_capabilities'))
+		{
+			foreach ($this->capabilities->find_all() as $capability)
 			{
-				foreach ($this->capabilities->find_all() as $capability)
-				{
-					$capabilities[$this->id][] = $capability->name;
-				}
+				$capabilities[] = $capability->name;
 			}
 		}
 
-		return Arr::get($capabilities, $this->id, array());
+		return $capabilities;
 	}
 
 } // End User Model

@@ -57,7 +57,6 @@ class Kohana_ACL_Rule {
 	 */
 	public $specificity = 0;
 
-
 	/**
 	 * Sets the directory for which the rule applies
 	 *
@@ -67,12 +66,10 @@ class Kohana_ACL_Rule {
 	public function for_directory($directory)
 	{
 		$this->_directory = $directory;
-
 		$this->specificity += 1;
 		
 		return $this;
 	}
-
 
 	/**
 	 * Sets the controller for which the rule applies
@@ -83,31 +80,25 @@ class Kohana_ACL_Rule {
 	public function for_controller($controller)
 	{
 		$this->_controller = $controller;
-
 		$this->specificity += 2;
 
 		return $this;
 	}
 
-
 	/**
-	 * Sets the action for which the rule applies
+	 * Sets the action for which the rule applies. Allows for multiple actions.
 	 *
 	 * @param   string  The action name
 	 * @return  ACL_Rule
 	 */
 	public function for_action($action)
 	{
-		// Allow for multiple actions
 		$actions = func_get_args();
-
 		$this->_action = array_merge($this->_action, $actions);
-
 		$this->specificity += 3;
 
 		return $this;
 	}
-
 
 	/**
 	 * Add all roles to the array of allowed roles
@@ -121,7 +112,6 @@ class Kohana_ACL_Rule {
 
 		return $this;
 	}
-
 
 	/**
 	 * Add a role(s) to the array of allowed roles
@@ -137,7 +127,7 @@ class Kohana_ACL_Rule {
 		// Check for invalid roles
 		$invalid = array_diff($roles, ACL::$valid['roles']);
 		if ( ! empty($invalid))
-			throw new Kohana_ACL_Exception ('An invalid role, :role, was added to an ACL rule.',
+			throw new Kohana_ACL_Exception ('":role" is an invalid role, and cannot be added to an ACL rule.',
 				array(':role' => $invalid[0]));
 
 		// Add these roles to the current set
@@ -145,7 +135,6 @@ class Kohana_ACL_Rule {
 
 		return $this;
 	}
-
 
 	/**
 	 * Add a capability(s) to the array of allowed capabilities
@@ -165,7 +154,7 @@ class Kohana_ACL_Rule {
 		// Check for invalid capabilities
 		$invalid = array_diff($capabilities, ACL::$valid['capabilities']);
 		if ( ! empty($invalid))
-			throw new Kohana_ACL_Exception ('An invalid capability, :capability, was added to an ACL rule.',
+			throw new Kohana_ACL_Exception ('":capability" is an invalid role, and cannot be added to an ACL rule.',
 				array(':capability' => $invalid[0]));
 		
 		// Add these capabilities to the current set
@@ -174,9 +163,9 @@ class Kohana_ACL_Rule {
 		return $this;
 	}
 
-
 	/**
-	 * Add a user(s) to the array of allowed users
+	 * Add a user(s) to the array of allowed users. Users can be added by `id`,
+	 * `Model_Acl_User` object, or unique key (usually `email`).
 	 *
 	 * @param   mixed  The user
 	 * @return  ACL_Rule
@@ -206,7 +195,7 @@ class Kohana_ACL_Rule {
 			}
 
 			// Get the ID from the User object and add it
-			if ($user instanceOf Model_User AND $user->loaded())
+			if ($user instanceOf Model_Acl_User AND $user->loaded())
 			{
 				$this->users[] = $user->id;
 			}
@@ -214,7 +203,6 @@ class Kohana_ACL_Rule {
 
 		return $this;
 	}
-
 
 	/**
 	 * Sets the rule to auto mode. The actual capability to be allowed is
@@ -226,7 +214,7 @@ class Kohana_ACL_Rule {
 	{
 		// Do not allow this method if capabilities are not supported
 		if (Kohana::config('acl.support_capabilities') === FALSE)
-			throw new Kohana_ACL_Exception ('Capabilities are not supported in this configuration of the ACL module.');
+			throw new Kohana_ACL_Exception('Capabilities are not supported in this configuration of the ACL module.');
 
 		// Make sure the controller and action are set
 		if (empty($this->_action))
@@ -240,7 +228,6 @@ class Kohana_ACL_Rule {
 		return $this;
 	}
 
-
 	/**
 	 * Does `allow_capability` based on a controller and action. Used in rule
 	 * compilation
@@ -251,7 +238,7 @@ class Kohana_ACL_Rule {
 	{
 		// Only run this method if in auto mode and capabilities are supported
 		if ( ! $this->_auto_mode OR Kohana::config('acl.support_capabilities') === FALSE)
-			return;
+			return $this;
 
 		// Get capability associated with this request
 		$capability_name = strtolower(str_ireplace(
@@ -266,11 +253,12 @@ class Kohana_ACL_Rule {
 		return $this;
 	}
 
-
 	/**
-	 * Sets the action of a rule
+	 * Sets the action of a rule. This is different than `for_action` in that it
+	 * sets only a single action. This is mainly used during rule compilation
 	 *
-	 * @param  string  The action for this rule to be set to
+	 * @param  string  The action for this rule
+	 * @return  ACL_Rule
 	 */
 	public function set_action($action)
 	{
@@ -278,7 +266,6 @@ class Kohana_ACL_Rule {
 
 		return $this;
 	}
-
 
 	/**
 	 * Add a callback to be executed when the user is not authorized
@@ -304,7 +291,6 @@ class Kohana_ACL_Rule {
 
 		return $this;
 	}
-
 
 	/**
 	 * Performs a matching callback as defined in he compiled rule. It looks at
@@ -348,7 +334,7 @@ class Kohana_ACL_Rule {
 		// Pop the first action off the array and set it
 		$this->set_action(array_shift($actions));
 
-		// Handle the special "cuurent action" case for `allow_auto`
+		// Handle the special "current action" case for `allow_auto`
 		if ($this->_action == ACL_Rule::CURRENT_ACTION)
 		{
 			$request_action = Arr::get($parts, 'action');
@@ -375,7 +361,6 @@ class Kohana_ACL_Rule {
 		}
 	}
 
-
 	/**
 	 * Determines if the rule is valid
 	 *
@@ -392,7 +377,6 @@ class Kohana_ACL_Rule {
 		return TRUE;
 	}
 
-
 	/**
 	 * Determines whether or not the rule applies to the specified request
 	 *
@@ -408,30 +392,42 @@ class Kohana_ACL_Rule {
 		return (bool) ($directory_matches AND $controller_matches AND $action_matches);
 	}
 
-
 	/**
-	 * Merge another rule with this one based on specificity
+	 * Merge/Overwrite another rule with this one based on specificity, like CSS
 	 *
 	 * @param   ACL_Rule  The rule to merge with this one
-	 * @return  ACL_Rule
+	 * @return  ACL_Rule  The new rule, after merging
 	 */
 	public function merge(ACL_Rule $rule)
 	{
-		$rule_left  = ($rule->specificity >= $this->specificity) ? $this : $rule;
-		$rule_right = ($rule->specificity >= $this->specificity) ? $rule : $this;
+		// Decide which rule is the more specific
+		if ($rule->specificity >= $this->specificity)
+		{
+			$rule_left  = $this;
+			$rule_right = $rule;
+		}
+		else
+		{
+			$rule_left  = $rule;
+			$rule_right = $this;
+		}
 
+		// Set the new specificity (the greater of the two rules)
 		$rule_left->specificity = max($rule_left->specificity, $rule_right->specificity);
 
+		// Merge roles
 		if ( ! empty($rule_right->roles))
 		{
 			$rule_left->roles = $rule_right->roles;
 		}
 
+		// Merge capabilities
 		if ( ! empty($rule_right->capabilities))
 		{
 			$rule_left->capabilities = $rule_right->capabilities;
 		}
 
+		// Merge users
 		if ( ! empty($rule_right->users))
 		{
 			$rule_left->users = $rule_right->users;
@@ -439,7 +435,6 @@ class Kohana_ACL_Rule {
 
 		return $rule_left;
 	}
-
 
 	/**
 	 * Evaluates whether or not the user is authorized based on the rule
