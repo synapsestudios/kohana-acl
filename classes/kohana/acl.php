@@ -201,7 +201,7 @@ class Kohana_ACL {
 	 *
 	 * @return  boolean
 	 * @throws  Kohana_Request_Exception
-	 * @uses    ACL::allows_user
+	 * @uses    ACL::_compile_rules
 	 * @uses    ACL::verify_request
 	 */
 	public function authorize()
@@ -215,9 +215,15 @@ class Kohana_ACL {
 		// Validate the request. Throws a 404 if controller or action do not exist
 		$this->verify_request($request);
 			
-		// Check if this user has access to this request
-		if ( ! empty(self::$_rules) && $this->allows_user($this->_user))
-			return TRUE;
+		if ( ! empty(self::$_rules))
+		{
+			// Compile the rules
+			$rule = $this->_compile_rules();
+
+			// Check if this user has access to this request
+			if ($rule->allows_user($this->_user))
+				return TRUE;
+		}
 
 		// Set the HTTP status to 403 - Access Denied
 		$request->status = 403;
