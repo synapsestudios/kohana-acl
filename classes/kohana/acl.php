@@ -17,12 +17,12 @@ class Kohana_ACL {
 	/**
 	 * @var  array  contains all the ACL rules
 	 */
-	protected static $_rules     = array();
+	protected static $_rules = array();
 
 	/**
 	 * @var  array  An array containing all valid items
 	 */
-	public static $valid         = NULL;
+	public static $valid = NULL;
 
 	/**
 	 * Creates/Retrieves an instance of ACL based on a request. The request can
