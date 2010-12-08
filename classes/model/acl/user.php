@@ -292,4 +292,4 @@ class Model_Acl_User extends Model_Auth_User {
 		return $capabilities;
 	}
 
-} // End User Model
+} // End ACL User Model

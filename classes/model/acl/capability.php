@@ -8,8 +8,6 @@
  * @copyright  (c) 2010 Synapse Studios
  */
 class Model_Acl_Capability extends ORM {
-
-	// Relationships
 	
 	protected $_has_many = array
 	(
@@ -21,4 +19,4 @@ class Model_Acl_Capability extends ORM {
 		'role' => array('model' => 'role')
 	);
 
-} // End Capability Model
+} // End ACL Capability Model

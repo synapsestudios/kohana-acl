@@ -8,8 +8,6 @@
  * @copyright  (c) 2010 Synapse Studios
  */
 class Model_Acl_Role extends Model_Auth_Role {
-
-	// Relationships
 	
 	protected $_has_many = array
 	(
@@ -17,4 +15,4 @@ class Model_Acl_Role extends Model_Auth_Role {
 		'capabilities' => array('model' => 'capability'),
 	);
 
-} // End Role Model
+} // End ACL Role Model
