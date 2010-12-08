@@ -25,39 +25,57 @@ class Kohana_ACL {
 	public static $valid         = NULL;
 
 	/**
-	 * Creates/Retrieves an instance of ACL based on a request. 
+	 * Creates/Retrieves an instance of ACL based on a request. The request can
+	 * be passed in a variety of forms for convenience, it can be: a `Request`
+	 * object, an array of requests parts (directory, controller, action), a
+	 * URI, or NULL (which will resolve to the current request).
 	 *
-	 * @param   mixed  The Request object, or an array of request parts
+	 * @param   mixed  Request object, array of request parts, or uri string
 	 * @return  ACL
 	 */
-	public static function instance($parts = NULL)
+	public static function instance($request = NULL)
 	{
 		// Initialize the $valid array
 		self::_initialize_valid_items();
-
-		// Get the request parts, if they were not provided
-		if ($parts === NULL)
+		
+		// Determine the request object, if one was not provided
+		if (is_string($request))
 		{
+			// Get the request by URI
+			$request = Request::factory($request);
+		}
+		elseif ($request === NULL)
+		{
+			// Use the current request
 			$request = Request::current();
-			$parts = array
+		}
+		
+		// Get the request parts array (directory, controller, action)
+		if ($request instanceof Request)
+		{
+			$request_parts = array
 			(
 				'directory'  => $request->directory,
 				'controller' => $request->controller,
 				'action'     => $request->action,
 			);
 		}
+		elseif (is_array($request))
+		{
+			$request_parts = Arr::extract($request, array('directory', 'controller', 'action'));
+		}
 		else
 		{
-			$parts = Arr::extract($parts, array('directory', 'controller', 'action'));
+			throw new Kohana_ACL_Exception('Could not determine the request from the provided parameter.');
 		}
 
 		// Use the imploded request parts as the key for this instance
-		$key = implode('/', $parts);
+		$key = implode('/', $request_parts);
 
 		// Register the instance if it doesn't exist
 		if ( ! isset(self::$_instances[$key]))
 		{
-			self::$_instances[$key] = new ACL($parts);
+			self::$_instances[$key] = new ACL($request_parts);
 		}
 
 		return self::$_instances[$key];
