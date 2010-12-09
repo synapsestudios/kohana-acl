@@ -35,7 +35,7 @@ class Kohana_ACL_Rule {
 	/**
 	 * @var  array  An array of all added callbacks
 	 */
-	protected $_callbacks = array();
+	public $callbacks = array();
 
 	/**
 	 * @var  array  An array of all added roles
@@ -283,7 +283,7 @@ class Kohana_ACL_Rule {
 		
 		// Add the callback to the callbacks list
 		$role = empty($role) ? ACL_Rule::DEFAULT_CALLBACK : $role;
-		$this->_callbacks[$role] = array
+		$this->callbacks[$role] = array
 		(
 			'function' => $function,
 			'args'     => $args,
@@ -302,7 +302,7 @@ class Kohana_ACL_Rule {
 	public function perform_callback(Model_User $user)
 	{
 		// Loop through the callbacks
-		foreach ($this->_callbacks as $role => $callback)
+		foreach ($this->callbacks as $role => $callback)
 		{
 			// If the user matches the role (or it's a default), execute it
 			if ($role === ACL_Rule::DEFAULT_CALLBACK OR $user->is_a($role))
@@ -431,6 +431,12 @@ class Kohana_ACL_Rule {
 		if ( ! empty($rule_right->users))
 		{
 			$rule_left->users = $rule_right->users;
+		}
+
+		// Merge callbacks
+		if ( ! empty($rule_right->callbacks))
+		{
+			$rule_left->callbacks = $rule_right->callbacks;
 		}
 
 		return $rule_left;
