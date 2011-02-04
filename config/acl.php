@@ -20,11 +20,5 @@ return array
 	/**
 	 * `TRUE` if a user must have an associated role to have a capability
 	 */
-	'capabilties_limited_by_role' => FALSE,
-
-	/**
-	 * The format of capability names
-	 */
-	'auto_format' => '{action}-{controller}',
-	
+	'capabilties_limited_by_role' => FALSE,	
 );

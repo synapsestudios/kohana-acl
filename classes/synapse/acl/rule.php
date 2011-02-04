@@ -239,13 +239,10 @@ class Synapse_ACL_Rule {
 		// Only run this method if in auto mode and capabilities are supported
 		if ( ! $this->_auto_mode OR Kohana::config('acl.support_capabilities') === FALSE)
 			return $this;
-
-		// Get capability associated with this request
-		$capability_name = strtolower(str_ireplace(
-			array('{controller}', '{action}'),
-			array($this->_controller, $this->_action),
-			Kohana::config('acl.auto_format')
-		));
+		
+		// Get capability associated with this request. Format: <action>_(<directory>_)<controller>
+		$directory_part  = ( ! empty($this->_directory)) ? $this->_directory.'_' : '';
+		$capability_name = strtolower($this->_action.'_'.$directory_part.$this->_controller);
 
 		// Allow the capability
 		$this->allow_capability($capability_name);
