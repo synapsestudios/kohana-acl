@@ -18,7 +18,7 @@ used to represent what a user *is*, and capabilities are used to represent what
 a user is allowed to *do*. Capabilities will most likely correspond to an
 action on a controller. For example, you might guard the **delete** action on 
 the **article** controller by enforcing the rule that the current user must have
-a capability called "delete-article" (or something similar).
+a capability called "delete_article" (or something similar).
 
 ACL rules are defined in such a way that they have a specific scope, and this 
 scope can cascade onto less specific rules. This cascading system allows multiple
@@ -43,7 +43,7 @@ and relationships.
 application, be sure to extend Model_ACL_Role, Model_ACL_Capability and 
 Model_ACL_User classes, respectively.
 4. You need to write an ACL rules file for your application.
-5. The boostrap file needs to be edited. 
-    1. The boostrap file should `require` the ACL rules file.
+5. The bootstrap file needs to be edited. 
+    1. The bootstrap file should `require` the ACL rules file.
     2. The bootstrap needs to run the `ACL::instance()->authorize();` sometime 
 	after the rules file is included and before request is executed.
