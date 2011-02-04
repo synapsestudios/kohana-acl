@@ -40,8 +40,8 @@ modules list before Auth**.
 2. The `acl.sql` file needs to be run to add the ACL module's database tables 
 and relationships.
 3. If you are overwriting the role, capability, or user models in your 
-application, be sure to extend Model_Acl_Role, Model_Acl_Capability and 
-Model_Acl_User classes, respectively.
+application, be sure to extend Model_ACL_Role, Model_ACL_Capability and 
+Model_ACL_User classes, respectively.
 4. You need to write an ACL rules file for your application.
 5. The boostrap file needs to be edited. 
     1. The boostrap file should `require` the ACL rules file.

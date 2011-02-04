@@ -7,7 +7,7 @@
  * @author     Jeremy Lindblom <jeremy@synapsestudios.com>
  * @copyright  (c) 2010 Synapse Studios
  */
-class Kohana_ACL_Rule {
+class Synapse_ACL_Rule {
 
 	const DEFAULT_CALLBACK = '{DEFAULT}';
 	const CURRENT_ACTION   = '{CURRENT}';
@@ -127,7 +127,7 @@ class Kohana_ACL_Rule {
 		// Check for invalid roles
 		$invalid = array_values(array_diff($roles, ACL::$valid['roles']));
 		if ( ! empty($invalid))
-			throw new Kohana_ACL_Exception('":role" is an invalid role, and cannot be added to an ACL rule.',
+			throw new Synapse_ACL_Exception('":role" is an invalid role, and cannot be added to an ACL rule.',
 				array(':role' => $invalid[0]));
 
 		// Add these roles to the current set
@@ -146,7 +146,7 @@ class Kohana_ACL_Rule {
 	{
 		// Do not allow this method if capabilities are not supported
 		if (Kohana::config('acl.support_capabilities') === FALSE)
-			throw new Kohana_ACL_Exception('Capabilities are not supported in this configuration of the ACL module.');
+			throw new Synapse_ACL_Exception('Capabilities are not supported in this configuration of the ACL module.');
 
 		// Allow for multiple capabilities
 		$capabilities = func_get_args();
@@ -154,7 +154,7 @@ class Kohana_ACL_Rule {
 		// Check for invalid capabilities
 		$invalid = array_diff($capabilities, ACL::$valid['capabilities']);
 		if ( ! empty($invalid))
-			throw new Kohana_ACL_Exception ('":capability" is an invalid role, and cannot be added to an ACL rule.',
+			throw new Synapse_ACL_Exception ('":capability" is an invalid role, and cannot be added to an ACL rule.',
 				array(':capability' => $invalid[0]));
 		
 		// Add these capabilities to the current set
@@ -165,7 +165,7 @@ class Kohana_ACL_Rule {
 
 	/**
 	 * Add a user(s) to the array of allowed users. Users can be added by `id`,
-	 * `Model_Acl_User` object, or unique key (usually `email`).
+	 * `Model_ACL_User` object, or unique key (usually `email`).
 	 *
 	 * @param   mixed  The user
 	 * @return  ACL_Rule
@@ -195,7 +195,7 @@ class Kohana_ACL_Rule {
 			}
 
 			// Get the ID from the User object and add it
-			if ($user instanceOf Model_Acl_User AND $user->loaded())
+			if ($user instanceOf Model_ACL_User AND $user->loaded())
 			{
 				$this->users[] = $user->id;
 			}
@@ -214,7 +214,7 @@ class Kohana_ACL_Rule {
 	{
 		// Do not allow this method if capabilities are not supported
 		if (Kohana::config('acl.support_capabilities') === FALSE)
-			throw new Kohana_ACL_Exception('Capabilities are not supported in this configuration of the ACL module.');
+			throw new Synapse_ACL_Exception('Capabilities are not supported in this configuration of the ACL module.');
 
 		// Make sure the controller and action are set
 		if (empty($this->_action))
@@ -279,7 +279,7 @@ class Kohana_ACL_Rule {
 	{
 		// Check if the function is a valid callback
 		if ( ! is_callable($function))
-			throw new Kohana_ACL_Exception('An invalid callback was added to the ACL rule.');
+			throw new Synapse_ACL_Exception('An invalid callback was added to the ACL rule.');
 		
 		// Add the callback to the callbacks list
 		$role = empty($role) ? ACL_Rule::DEFAULT_CALLBACK : $role;

@@ -7,7 +7,7 @@
  * @author     Jeremy Lindblom <jeremy@synapsestudios.com>
  * @copyright  (c) 2010 Synapse Studios
  */
-class Model_Acl_Capability extends ORM {
+class Model_ACL_Capability extends ORM {
 	
 	protected $_has_many = array
 	(
@@ -19,4 +19,4 @@ class Model_Acl_Capability extends ORM {
 		'role' => array('model' => 'role')
 	);
 
-} // End ACL Capability Model
+} // End Model_ACL_Capability

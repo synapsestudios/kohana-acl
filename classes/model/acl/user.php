@@ -7,7 +7,7 @@
  * @author     Jeremy Lindblom <jeremy@synapsestudios.com>
  * @copyright  (c) 2010 Synapse Studios
  */
-class Model_Acl_User extends Model_Auth_User {
+class Model_ACL_User extends Model_Auth_User {
 	
 	protected $_has_many = array
 	(
@@ -58,7 +58,7 @@ class Model_Acl_User extends Model_Auth_User {
 	{
 		// Do not allow this method if capabilities are not supported
 		if (Kohana::config('acl.support_capabilities') === FALSE)
-			throw new Kohana_ACL_Exception ('Capabilities are not supported in this configuration of the ACL module.');
+			throw new Synapse_ACL_Exception ('Capabilities are not supported in this configuration of the ACL module.');
 
 		// If the user has the super role, they can!
 		$super_role = Kohana::config('acl.super_role');
@@ -190,7 +190,7 @@ class Model_Acl_User extends Model_Auth_User {
 	{
 		// Do not allow this method if capabilities are not supported
 		if (Kohana::config('acl.support_capabilities') === FALSE)
-			throw new Kohana_ACL_Exception ('Capabilities are not supported in this configuration of the ACL module.');
+			throw new Synapse_ACL_Exception ('Capabilities are not supported in this configuration of the ACL module.');
 
 		// Get capability object
 		if ( ! $capability instanceOf Model_Capability)
@@ -226,7 +226,7 @@ class Model_Acl_User extends Model_Auth_User {
 	{
 		// Do not allow this method if capabilities are not supported
 		if (Kohana::config('acl.support_capabilities') === FALSE)
-			throw new Kohana_ACL_Exception ('Capabilities are not supported in this configuration of the ACL module.');
+			throw new Synapse_ACL_Exception ('Capabilities are not supported in this configuration of the ACL module.');
 
 		// Get capability object
 		if ( ! $capability instanceOf Model_Capability)
@@ -292,4 +292,4 @@ class Model_Acl_User extends Model_Auth_User {
 		return $capabilities;
 	}
 
-} // End ACL User Model
+} // End Model_ACL_User

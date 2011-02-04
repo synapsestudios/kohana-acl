@@ -7,7 +7,7 @@
  * @author     Jeremy Lindblom <jeremy@synapsestudios.com>
  * @copyright  (c) 2010 Synapse Studios
  */
-class Kohana_ACL {
+class Synapse_ACL {
 
 	/**
 	 * @var  array  contains the instances (by request) of ACL
@@ -66,7 +66,7 @@ class Kohana_ACL {
 		}
 		else
 		{
-			throw new Kohana_ACL_Exception('Could not determine the request from the provided parameter.');
+			throw new Synapse_ACL_Exception('Could not determine the request from the provided parameter.');
 		}
 
 		// Use the imploded request parts as the key for this instance
