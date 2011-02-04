@@ -142,9 +142,12 @@ class Model_ACL_User extends Model_Auth_User {
 		$this->add('roles', $role);
 
 		// Add all of the capabilities associated with the role
-		foreach ($role->capabilities->find_all() as $capability)
+		if (Kohana::config('acl.support_capabilities') == TRUE)
 		{
-			$this->add('capabilities', $capability);
+			foreach ($role->capabilities->find_all() as $capability)
+			{
+				$this->add('capabilities', $capability);
+			}
 		}
 
 		return $this;
@@ -169,9 +172,12 @@ class Model_ACL_User extends Model_Auth_User {
 			throw new UnexpectedValueException('Tried to remove a role that did not exist.');
 
 		// Remove all of the capabilities associated with the role
-		foreach ($role->capabilities->find_all() as $capability)
+		if (Kohana::config('acl.support_capabilities') == TRUE)
 		{
-			$this->remove('capabilities', $capability);
+			foreach ($role->capabilities->find_all() as $capability)
+			{
+				$this->remove('capabilities', $capability);
+			}
 		}
 
 		// Remove the role from the user
