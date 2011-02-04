@@ -47,7 +47,3 @@ Model_Acl_User classes, respectively.
     1. The boostrap file should `require` the ACL rules file.
     2. The bootstrap needs to run the `ACL::instance()->authorize();` sometime 
 	after the rules file is included and before request is executed.
-	
-### Discalimer
-
-This version of the Module is under testing!
