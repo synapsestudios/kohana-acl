@@ -242,18 +242,18 @@ class Synapse_ACL {
 	 */
 	protected function _compile_rules()
 	{
-		// Create a blank, base rule
-		$compiled_rule = new ACL_Rule;
-
 		// Resolve and separate multi-action rules
-		$defined_rules = self::$_rules;
-		foreach ($defined_rules as $rule)
+		$resolved_rules = array();
+		foreach (self::$_rules as $rule)
 		{
-			$rule->resolve($this->_parts);
+			$resolved_rules = array_merge($resolved_rules, $rule->resolve($this->_parts));
 		}
 		
+		// Create a blank, base rule to compile down to
+		$compiled_rule = new ACL_Rule;
+		
 		// Merge rules together that apply to this request
-		foreach (self::$_rules as $rule)
+		foreach ($resolved_rules as $rule)
 		{
 			if ($rule->valid() AND $rule->applies_to($this->_parts))
 			{

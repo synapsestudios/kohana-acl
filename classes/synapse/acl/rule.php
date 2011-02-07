@@ -311,51 +311,56 @@ class Synapse_ACL_Rule {
 	}
 
 	/**
-	 * Resolves a rule to its correct values befire authorization
+	 * Resolves a rule to its correct values before authorization
 	 *
 	 * @param   Request  The current request
-	 * @return  void
+	 * @return  array   An array of resolved rules
 	 */
 	public function resolve(array $parts)
 	{
+		// This will store all of the resolved rules created here
+		$resolved = array();
+		
+		// Work with a copy of this rule, so we do not alter it
+		$rule = clone $this;
+		
 		// Get all of the actions
-		$actions = $this->_action;
+		$actions = $rule->_action;
 
-		// If no actions, then set to empty and be done
+		// If no actions, then set to empty and return
 		if (empty($actions))
 		{
-			$this->set_action('');
-			return;
+			$resolved[] = $rule->set_action('');
+			return $resolved;
 		}
 
 		// Pop the first action off the array and set it
-		$this->set_action(array_shift($actions));
+		$rule->set_action(array_shift($actions));
 
 		// Handle the special "current action" case for `allow_auto`
-		if ($this->_action == ACL_Rule::CURRENT_ACTION)
+		if ($rule->_action == ACL_Rule::CURRENT_ACTION)
 		{
 			$request_action = Arr::get($parts, 'action');
-			$this->set_action($request_action);
+			$rule->set_action($request_action);
 		}
 
 		// Resolve capability for `allow_auto`
-		$this->resolve_capability();
-
-		// For all additional rules, create new rule objects and set the action
+		$resolved[] = $rule->resolve_capability();
+		
+		// For all the other actions defined, split them up into additional rule objects
 		foreach ($actions as $action)
 		{
 			// Clone the original rule
-			$rule = clone $this;
+			$split_rule = clone $rule;
 
 			// Set the action
-			$rule->set_action($action);
+			$split_rule->set_action($action);
 
 			// Resolve capability for `allow_auto`
-			$rule->resolve_capability();
-
-			// Add this rule to the ACL rule definitions
-			ACL::rule($rule);
+			$resolved[] = $split_rule->resolve_capability();
 		}
+		
+		return $resolved;
 	}
 
 	/**
