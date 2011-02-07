@@ -371,10 +371,8 @@ class Synapse_ACL_Rule {
 	public function valid()
 	{
 		// If an action is defined, a controller must also be defined
-		if ( ! empty($this->_action))
-		{
-			return ! empty($this->_controller);
-		}
+		if ($this->_action)
+			return (bool) $this->_controller;
 		
 		return TRUE;
 	}
