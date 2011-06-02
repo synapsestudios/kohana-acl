@@ -76,7 +76,7 @@ class Model_ACL_User extends Model_Auth_User {
 			throw new UnexpectedValueException('Tried to check for a capability that did not exist.');
 
 		// Return whether or not they have access
-		return (bool) $user->has('capability', $capability);
+		return (bool) $user->has('capabilities', $capability);
 	}
 
 	/**
