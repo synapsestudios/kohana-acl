@@ -7,10 +7,47 @@
  * @author     Jeremy Lindblom <jeremy@synapsestudios.com>
  * @copyright  (c) 2010 Synapse Studios
  */
-class Synapse_ACL_Rule {
+class Synapse_ACL_Rule implements Serializable {
 
 	const DEFAULT_CALLBACK = '{DEFAULT}';
 	const CURRENT_ACTION   = '{CURRENT}';
+
+	public static function valid_roles()
+	{
+		static $roles = array();
+
+		if ( ! empty($roles))
+		{
+			// Add public pseudo-role to list
+			if ($public_role = Kohana::config('acl.public_role'))
+			{
+				$roles[] = $public_role;
+			}
+
+			// Add other roles from database
+			foreach (ORM::factory('role')->find_all() as $role)
+			{
+				$roles[] = $role->name;
+			}
+		}
+
+		return $roles;
+	}
+
+	public static function valid_capabilities()
+	{
+		static $capabilities = array();
+
+		if (empty($capabilities) AND Kohana::config('acl.support_capabilities'))
+		{
+			foreach (ORM::factory('capability')->find_all() as $capability)
+			{
+				$capabilities[] = $capability->name;
+			}
+		}
+
+		return $capabilities;
+	}
 
 	/**
 	 * @var  boolean  TRUE if the rule needs to be resolved with a capability
@@ -33,6 +70,11 @@ class Synapse_ACL_Rule {
 	protected $_action = array();
 
 	/**
+	 * @var  integer  Indicates how specific a rule is
+	 */
+	protected $_specificity = 0;
+
+	/**
 	 * @var  array  An array of all added callbacks
 	 */
 	public $callbacks = array();
@@ -53,9 +95,16 @@ class Synapse_ACL_Rule {
 	public $users = array();
 
 	/**
-	 * @var  integer  Indicates how specific a rule is 
+	 * Factory method for creating chainable instance
+	 *
+	 * @chainable
+	 * @static
+	 * @return ACL_Rule
 	 */
-	public $specificity = 0;
+	public static function factory()
+	{
+		return new ACL_Rule;
+	}
 
 	/**
 	 * Sets the directory for which the rule applies
@@ -66,7 +115,7 @@ class Synapse_ACL_Rule {
 	public function for_directory($directory)
 	{
 		$this->_directory = $directory;
-		$this->specificity += 1;
+		$this->_specificity += 1;
 		
 		return $this;
 	}
@@ -80,7 +129,7 @@ class Synapse_ACL_Rule {
 	public function for_controller($controller)
 	{
 		$this->_controller = $controller;
-		$this->specificity += 2;
+		$this->_specificity += 2;
 
 		return $this;
 	}
@@ -95,7 +144,7 @@ class Synapse_ACL_Rule {
 	{
 		$actions = func_get_args();
 		$this->_action = array_merge($this->_action, $actions);
-		$this->specificity += 3;
+		$this->_specificity += 3;
 
 		return $this;
 	}
@@ -108,7 +157,7 @@ class Synapse_ACL_Rule {
 	public function allow_all()
 	{
 		// Add all roles (including public)
-		$this->roles = ACL::$valid['roles'];
+		$this->roles = ACL_Rule::valid_roles();
 
 		return $this;
 	}
@@ -125,7 +174,7 @@ class Synapse_ACL_Rule {
 		$roles = func_get_args();
 
 		// Check for invalid roles
-		$invalid = array_values(array_diff($roles, ACL::$valid['roles']));
+		$invalid = array_values(array_diff($roles, ACL_Rule::valid_roles()));
 		if ( ! empty($invalid))
 			throw new Synapse_ACL_Exception('":role" is an invalid role, and cannot be added to an ACL rule.',
 				array(':role' => $invalid[0]));
@@ -152,7 +201,7 @@ class Synapse_ACL_Rule {
 		$capabilities = func_get_args();
 
 		// Check for invalid capabilities
-		$invalid = array_diff($capabilities, ACL::$valid['capabilities']);
+		$invalid = array_diff($capabilities, ACL_Rule::valid_capabilities());
 		if ( ! empty($invalid))
 			throw new Synapse_ACL_Exception ('":capability" is an invalid role, and cannot be added to an ACL rule.',
 				array(':capability' => $invalid[0]));
@@ -257,7 +306,7 @@ class Synapse_ACL_Rule {
 	 * @param  string  The action for this rule
 	 * @return  ACL_Rule
 	 */
-	public function set_action($action)
+	protected function _set_action($action)
 	{
 		$this->_action = $action;
 
@@ -330,18 +379,18 @@ class Synapse_ACL_Rule {
 		// If no actions, then set to empty and return
 		if (empty($actions))
 		{
-			$resolved[] = $rule->set_action('');
+			$resolved[] = $rule->_set_action('');
 			return $resolved;
 		}
 
 		// Pop the first action off the array and set it
-		$rule->set_action(array_shift($actions));
+		$rule->_set_action(array_shift($actions));
 
 		// Handle the special "current action" case for `allow_auto`
 		if ($rule->_action == ACL_Rule::CURRENT_ACTION)
 		{
 			$request_action = Arr::get($parts, 'action');
-			$rule->set_action($request_action);
+			$rule->_set_action($request_action);
 		}
 
 		// Resolve capability for `allow_auto`
@@ -354,7 +403,7 @@ class Synapse_ACL_Rule {
 			$split_rule = clone $rule;
 
 			// Set the action
-			$split_rule->set_action($action);
+			$split_rule->_set_action($action);
 
 			// Resolve capability for `allow_auto`
 			$resolved[] = $split_rule->resolve_capability();
@@ -401,7 +450,7 @@ class Synapse_ACL_Rule {
 	public function merge(ACL_Rule $rule)
 	{
 		// Decide which rule is the more specific
-		if ($rule->specificity >= $this->specificity)
+		if ($rule->_specificity >= $this->_specificity)
 		{
 			$rule_left  = $this;
 			$rule_right = $rule;
@@ -413,7 +462,7 @@ class Synapse_ACL_Rule {
 		}
 
 		// Set the new specificity (the greater of the two rules)
-		$rule_left->specificity = max($rule_left->specificity, $rule_right->specificity);
+		$rule_left->_specificity = max($rule_left->_specificity, $rule_right->_specificity);
 
 		// Merge roles
 		if ( ! empty($rule_right->roles))
@@ -474,6 +523,16 @@ class Synapse_ACL_Rule {
 		}
 
 		return FALSE;
+	}
+
+	public function serialize()
+	{
+		//@TODO
+	}
+
+	public function unserialize($serialized)
+	{
+		//@TODO
 	}
 
 } // End ACL Rule
