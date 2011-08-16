@@ -300,20 +300,6 @@ class Synapse_ACL_Rule implements Serializable {
 	}
 
 	/**
-	 * Sets the action of a rule. This is different than `for_action` in that it
-	 * sets only a single action. This is mainly used during rule compilation
-	 *
-	 * @param  string  The action for this rule
-	 * @return  ACL_Rule
-	 */
-	protected function _set_action($action)
-	{
-		$this->_action = $action;
-
-		return $this;
-	}
-
-	/**
 	 * Add a callback to be executed when the user is not authorized
 	 *
 	 * @param   mixed     The role the callback is tied to
@@ -378,7 +364,8 @@ class Synapse_ACL_Rule implements Serializable {
 		if (empty($actions))
 		{
 			$rule = clone $this;
-			return array($rule->_set_action(''));
+			$rule->_action = '';
+			return array($rule);
 		}
 
 		// For all the actions defined, split them up into additional rule objects
@@ -387,11 +374,11 @@ class Synapse_ACL_Rule implements Serializable {
 			// Clone the rule, so we do not alter the original
 			$rule = clone $this;
 
-			// Determine the action for this rule, and handle the special "current action" case for `allow_auto`
-			$action = ($action == ACL_Rule::CURRENT_ACTION) ? $request->action() : $action;
+			// Set the action for this rule, and handle the special "current action" case for `allow_auto`
+			$rule->_action = ($action == ACL_Rule::CURRENT_ACTION) ? $request->action() : $action;
 
 			// Set the action and resolve the capability for `allow_auto`
-			$resolved[] = $rule->_set_action($action)->_resolve_capability();
+			$resolved[] = $rule->_resolve_capability();
 		}
 
 		return $resolved;
