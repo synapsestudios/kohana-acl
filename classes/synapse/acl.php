@@ -79,10 +79,9 @@ class Synapse_ACL {
 		if ( ! $rule->allows_user($user))
 		{
 			// Execute the callback (if any) from the compiled rule
-			list($function, $args) = $rule->callback_for_user($user);
-			if ($function)
+			if ($callback = $rule->callback_for_user($user))
 			{
-				call_user_func_array($function, $args);
+				call_user_func_array($callback['function'], $callback['args']);
 			}
 
 			// Throw a 401 exception (if the callback has altered program flow

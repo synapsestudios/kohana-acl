@@ -86,7 +86,7 @@ class Synapse_ACL_Rule_List implements Iterator, Countable, Serializable {
 
 	public function is_empty()
 	{
-		return (bool) $this->count();
+		return (bool) count($this->_rules);
 	}
 
 	public function clear()

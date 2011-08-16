@@ -10,7 +10,7 @@
 class Synapse_ACL_Rule implements Serializable {
 
 	const DEFAULT_CALLBACK = '{DEFAULT}';
-	const CURRENT_ACTION   = '{CURRENT}';
+	const CURRENT_ACTION = '{CURRENT}';
 
 	public static function valid_roles()
 	{
@@ -77,22 +77,22 @@ class Synapse_ACL_Rule implements Serializable {
 	/**
 	 * @var  array  An array of all added callbacks
 	 */
-	public $callbacks = array();
+	protected $_callbacks = array();
 
 	/**
 	 * @var  array  An array of all added roles
 	 */
-	public $roles = array();
+	protected $_roles = array();
 
 	/**
 	 * @var  array  An array of all added capabilities
 	 */
-	public $capabilities = array();
+	protected $_capabilities = array();
 
 	/**
 	 * @var  array  An array of all added users
 	 */
-	public $users = array();
+	protected $_users = array();
 
 	/**
 	 * Factory method for creating chainable instance
@@ -157,7 +157,7 @@ class Synapse_ACL_Rule implements Serializable {
 	public function allow_all()
 	{
 		// Add all roles (including public)
-		$this->roles = ACL_Rule::valid_roles();
+		$this->_roles = ACL_Rule::valid_roles();
 
 		return $this;
 	}
@@ -180,7 +180,7 @@ class Synapse_ACL_Rule implements Serializable {
 				array(':role' => $invalid[0]));
 
 		// Add these roles to the current set
-		$this->roles = array_merge($this->roles, $roles);
+		$this->_roles = array_merge($this->_roles, $roles);
 
 		return $this;
 	}
@@ -207,7 +207,7 @@ class Synapse_ACL_Rule implements Serializable {
 				array(':capability' => $invalid[0]));
 		
 		// Add these capabilities to the current set
-		$this->capabilities = array_merge($this->capabilities, $capabilities);
+		$this->_capabilities = array_merge($this->_capabilities, $capabilities);
 
 		return $this;
 	}
@@ -230,7 +230,7 @@ class Synapse_ACL_Rule implements Serializable {
 			// If an ID was passed it, add it
 			if (is_int($user))
 			{
-				$this->users[] = $user;
+				$this->_users[] = $user;
 				continue;
 			}
 
@@ -238,15 +238,15 @@ class Synapse_ACL_Rule implements Serializable {
 			if (is_string($user))
 			{
 				$username = $user;
-				$user     = ORM::factory('user');
-				$unique   = $user->unique_key($username);
+				$user = ORM::factory('user');
+				$unique = $user->unique_key($username);
 				$user->where($unique, "=", $username)->find();
 			}
 
 			// Get the ID from the User object and add it
-			if ($user instanceOf Model_ACL_User AND $user->loaded())
+			if ($user instanceof Model_ACL_User AND $user->loaded())
 			{
-				$this->users[] = $user->id;
+				$this->_users[] = $user->id;
 			}
 		}
 
@@ -283,14 +283,14 @@ class Synapse_ACL_Rule implements Serializable {
 	 *
 	 * @return  ACL_Rule
 	 */
-	protected function resolve_capability()
+	protected function _resolve_capability()
 	{
 		// Only run this method if in auto mode and capabilities are supported
 		if ( ! $this->_auto_mode OR Kohana::config('acl.support_capabilities') === FALSE)
 			return $this;
 		
 		// Get capability associated with this request. Format: <action>_(<directory>_)<controller>
-		$directory_part  = ( ! empty($this->_directory)) ? $this->_directory.'_' : '';
+		$directory_part = ( ! empty($this->_directory)) ? $this->_directory.'_' : '';
 		$capability_name = strtolower($this->_action.'_'.$directory_part.$this->_controller);
 
 		// Allow the capability
@@ -329,8 +329,7 @@ class Synapse_ACL_Rule implements Serializable {
 		
 		// Add the callback to the callbacks list
 		$role = empty($role) ? ACL_Rule::DEFAULT_CALLBACK : $role;
-		$this->callbacks[$role] = array
-		(
+		$this->_callbacks[$role] = array(
 			'function' => $function,
 			'args'     => $args,
 		);
@@ -339,76 +338,62 @@ class Synapse_ACL_Rule implements Serializable {
 	}
 
 	/**
-	 * Performs a matching callback as defined in he compiled rule. It looks at
-	 * all the callbacks and executes the first one that matches the user's
-	 * role or the default callback if defined. Otherwise, it does nothing.
+	 * Returns a matching callback as defined in the compiled rule. It looks at
+	 * all the callbacks and return the first one that matches the user's
+	 * role or the default callback if defined. Otherwise, it returns null.
 	 *
-	 * @return  void
+	 * @param   Model_ACL_User  The user for which to get a callback for
+	 * @return  null
 	 */
-	public function perform_callback(Model_User $user)
+	public function callback_for_user(Model_ACL_User $user)
 	{
 		// Loop through the callbacks
-		foreach ($this->callbacks as $role => $callback)
+		foreach ($this->_callbacks as $role => $callback)
 		{
 			// If the user matches the role (or it's a default), execute it
 			if ($role === ACL_Rule::DEFAULT_CALLBACK OR $user->is_a($role))
 			{
-				call_user_func_array($callback['function'], $callback['args']);
-				return;
+				return $callback;
 			}
 		}
+
+		return NULL;
 	}
 
 	/**
-	 * Resolves a rule to its correct values before authorization
+	 * Resolves a rule into one or more complete rules before authorization.
 	 *
 	 * @param   Request  The current request
 	 * @return  array   An array of resolved rules
 	 */
-	public function resolve(array $parts)
+	public function resolve(Request $request)
 	{
 		// This will store all of the resolved rules created here
 		$resolved = array();
-		
-		// Work with a copy of this rule, so we do not alter it
-		$rule = clone $this;
-		
-		// Get all of the actions
-		$actions = $rule->_action;
 
-		// If no actions, then set to empty and return
+		// Get all of the actions
+		$actions = $this->_action;
+
+		// If no actions, then copy the rule and set the action to empty
 		if (empty($actions))
 		{
-			$resolved[] = $rule->_set_action('');
-			return $resolved;
+			$rule = clone $this;
+			return array($rule->_set_action(''));
 		}
 
-		// Pop the first action off the array and set it
-		$rule->_set_action(array_shift($actions));
-
-		// Handle the special "current action" case for `allow_auto`
-		if ($rule->_action == ACL_Rule::CURRENT_ACTION)
-		{
-			$request_action = Arr::get($parts, 'action');
-			$rule->_set_action($request_action);
-		}
-
-		// Resolve capability for `allow_auto`
-		$resolved[] = $rule->resolve_capability();
-		
-		// For all the other actions defined, split them up into additional rule objects
+		// For all the actions defined, split them up into additional rule objects
 		foreach ($actions as $action)
 		{
-			// Clone the original rule
-			$split_rule = clone $rule;
+			// Clone the rule, so we do not alter the original
+			$rule = clone $this;
 
-			// Set the action
-			$split_rule->_set_action($action);
+			// Determine the action for this rule, and handle the special "current action" case for `allow_auto`
+			$action = ($action == ACL_Rule::CURRENT_ACTION) ? $request->action() : $action;
 
-			// Resolve capability for `allow_auto`
-			$resolved[] = $split_rule->resolve_capability();
+			// Set the action and resolve the capability for `allow_auto`
+			$resolved[] = $rule->_set_action($action)->_resolve_capability();
 		}
-		
+
 		return $resolved;
 	}
 
@@ -432,11 +417,11 @@ class Synapse_ACL_Rule implements Serializable {
 	 * @param   Request  The request for which to test the rule
 	 * @return  boolean
 	 */
-	public function applies_to(array $parts)
+	public function applies_to(Request $request)
 	{
-		$directory_matches  = (empty($this->_directory) OR $parts['directory'] == $this->_directory);
-		$controller_matches = (empty($this->_controller) OR $parts['controller'] == $this->_controller);
-		$action_matches     = (empty($this->_action) OR $parts['action'] == $this->_action);
+		$directory_matches = (empty($this->_directory) OR $request->directory() == $this->_directory);
+		$controller_matches = (empty($this->_controller) OR $request->controller() == $this->_controller);
+		$action_matches = (empty($this->_action) OR $request->action() == $this->_action);
 
 		return (bool) ($directory_matches AND $controller_matches AND $action_matches);
 	}
@@ -452,12 +437,12 @@ class Synapse_ACL_Rule implements Serializable {
 		// Decide which rule is the more specific
 		if ($rule->_specificity >= $this->_specificity)
 		{
-			$rule_left  = $this;
+			$rule_left = $this;
 			$rule_right = $rule;
 		}
 		else
 		{
-			$rule_left  = $rule;
+			$rule_left = $rule;
 			$rule_right = $this;
 		}
 
@@ -465,27 +450,27 @@ class Synapse_ACL_Rule implements Serializable {
 		$rule_left->_specificity = max($rule_left->_specificity, $rule_right->_specificity);
 
 		// Merge roles
-		if ( ! empty($rule_right->roles))
+		if ( ! empty($rule_right->_roles))
 		{
-			$rule_left->roles = $rule_right->roles;
+			$rule_left->_roles = $rule_right->_roles;
 		}
 
 		// Merge capabilities
-		if ( ! empty($rule_right->capabilities))
+		if ( ! empty($rule_right->_capabilities))
 		{
-			$rule_left->capabilities = $rule_right->capabilities;
+			$rule_left->_capabilities = $rule_right->_capabilities;
 		}
 
 		// Merge users
-		if ( ! empty($rule_right->users))
+		if ( ! empty($rule_right->_users))
 		{
-			$rule_left->users = $rule_right->users;
+			$rule_left->_users = $rule_right->_users;
 		}
 
 		// Merge callbacks
-		if ( ! empty($rule_right->callbacks))
+		if ( ! empty($rule_right->_callbacks))
 		{
-			$rule_left->callbacks = $rule_right->callbacks;
+			$rule_left->_callbacks = $rule_right->_callbacks;
 		}
 
 		return $rule_left;
@@ -494,10 +479,10 @@ class Synapse_ACL_Rule implements Serializable {
 	/**
 	 * Evaluates whether or not the user is authorized based on the rule
 	 *
-	 * @param   Model_User  The user that is being authorized
+	 * @param   Model_ACL_User  The user that is being authorized
 	 * @return  boolean
 	 */
-	public function allows_user(Model_User $user)
+	public function allows_user(Model_ACL_User $user)
 	{
 		// If the user has the super role, then allow access
 		$super_role = Kohana::config('acl.super_role');
@@ -505,19 +490,19 @@ class Synapse_ACL_Rule implements Serializable {
 			return TRUE;
 
 		// If the user is in the user list, then allow access
-		if (in_array($user->id, $this->users))
+		if (in_array($user->id, $this->_users))
 			return TRUE;
 
 		// If the user has all (AND) the capabilities, then allow access
-		$difference = array_diff($this->capabilities, $user->capabilities_list());
-		if ( ! empty($this->capabilities) AND empty($difference))
+		$difference = array_diff($this->_capabilities, $user->capabilities_list());
+		if ( ! empty($this->_capabilities) AND empty($difference))
 			return TRUE;
 
 		// If there were no capabilities allowed, check the roles
-		if (empty($this->capabilities))
+		if (empty($this->_capabilities))
 		{
 			// If the user has one (OR) the roles, then allow access
-			$intersection = array_intersect($this->roles, $user->roles_list());
+			$intersection = array_intersect($this->_roles, $user->roles_list());
 			if ( ! empty($intersection))
 				return TRUE;
 		}
@@ -527,12 +512,19 @@ class Synapse_ACL_Rule implements Serializable {
 
 	public function serialize()
 	{
-		//@TODO
+		return serialize(array(
+			$this->_auto_mode, $this->_directory, $this->_controller,
+			$this->_action, $this->_specificity, $this->_callbacks,
+			$this->_roles, $this->_capabilities, $this->_users,
+		));
 	}
 
 	public function unserialize($serialized)
 	{
-		//@TODO
+		list($this->_auto_mode, $this->_directory, $this->_controller,
+			$this->_action, $this->_specificity, $this->_callbacks,
+			$this->_roles, $this->_capabilities, $this->_users
+		) = unserialize($serialized);
 	}
 
 } // End ACL Rule
