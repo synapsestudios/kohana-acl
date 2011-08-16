@@ -109,6 +109,7 @@ class Synapse_ACL_Rule implements Serializable {
 	/**
 	 * Sets the directory for which the rule applies
 	 *
+	 * @chainable
 	 * @param   string  The directory name
 	 * @return  ACL_Rule
 	 */
@@ -123,6 +124,7 @@ class Synapse_ACL_Rule implements Serializable {
 	/**
 	 * Sets the controller for which the rule applies
 	 *
+	 * @chainable
 	 * @param   string  The controller name
 	 * @return  ACL_Rule
 	 */
@@ -137,6 +139,7 @@ class Synapse_ACL_Rule implements Serializable {
 	/**
 	 * Sets the action for which the rule applies. Allows for multiple actions.
 	 *
+	 * @chainable
 	 * @param   string  The action name
 	 * @return  ACL_Rule
 	 */
@@ -152,6 +155,7 @@ class Synapse_ACL_Rule implements Serializable {
 	/**
 	 * Add all roles to the array of allowed roles
 	 *
+	 * @chainable
 	 * @return  ACL_Rule
 	 */
 	public function allow_all()
@@ -165,6 +169,7 @@ class Synapse_ACL_Rule implements Serializable {
 	/**
 	 * Add a role(s) to the array of allowed roles
 	 *
+	 * @chainable
 	 * @param   string  The name of a role
 	 * @return  ACL_Rule
 	 */
@@ -188,6 +193,7 @@ class Synapse_ACL_Rule implements Serializable {
 	/**
 	 * Add a capability(s) to the array of allowed capabilities
 	 *
+	 * @chainable
 	 * @param   string  The name of a capability
 	 * @return  ACL_Rule
 	 */
@@ -216,6 +222,7 @@ class Synapse_ACL_Rule implements Serializable {
 	 * Add a user(s) to the array of allowed users. Users can be added by `id`,
 	 * `Model_ACL_User` object, or unique key (usually `email`).
 	 *
+	 * @chainable
 	 * @param   mixed  The user
 	 * @return  ACL_Rule
 	 */
@@ -257,6 +264,7 @@ class Synapse_ACL_Rule implements Serializable {
 	 * Sets the rule to auto mode. The actual capability to be allowed is
 	 * determined during rule compilation
 	 *
+	 * @chainable
 	 * @return  ACL_Rule
 	 */
 	public function allow_auto()
@@ -281,6 +289,7 @@ class Synapse_ACL_Rule implements Serializable {
 	 * Does `allow_capability` based on a controller and action. Used in rule
 	 * compilation
 	 *
+	 * @chainable
 	 * @return  ACL_Rule
 	 */
 	protected function _resolve_capability()
@@ -302,6 +311,7 @@ class Synapse_ACL_Rule implements Serializable {
 	/**
 	 * Add a callback to be executed when the user is not authorized
 	 *
+	 * @chainable
 	 * @param   mixed     The role the callback is tied to
 	 * @param   Callable  A callable function
 	 * @param   array     The callback's arguments
