@@ -16,7 +16,7 @@ class Synapse_ACL_Rule implements Serializable {
 	{
 		static $roles = array();
 
-		if ( ! empty($roles))
+		if (empty($roles))
 		{
 			// Add public pseudo-role to list
 			if ($public_role = Kohana::config('acl.public_role'))
@@ -483,7 +483,7 @@ class Synapse_ACL_Rule implements Serializable {
 	{
 		// If the user has the super role, then allow access
 		$super_role = Kohana::config('acl.super_role');
-		if ($super_role AND in_array($super_role, $user->roles_list()))
+		if ($super_role AND $user->is_a($super_role))
 			return TRUE;
 
 		// If the user is in the user list, then allow access
