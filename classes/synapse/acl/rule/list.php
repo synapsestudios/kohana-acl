@@ -1,5 +1,12 @@
 <?php defined('SYSPATH') or die('No direct script access.');
-
+/**
+ * ACL Rule List library
+ *
+ * @package    ACL
+ * @author     Synapse Studios
+ * @author     Jeremy Lindblom <jeremy@synapsestudios.com>
+ * @copyright  (c) 2010 Synapse Studios
+ */
 class Synapse_ACL_Rule_List implements Iterator, Countable, Serializable {
 
 	public static function factory()
@@ -14,6 +21,12 @@ class Synapse_ACL_Rule_List implements Iterator, Countable, Serializable {
 		$this->_rules[] = $rule;
 
 		return $this;
+	}
+
+	public function from_array(array $array)
+	{
+		// @TODO
+		$this->_rules = $array;
 	}
 
 	/**

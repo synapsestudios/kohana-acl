@@ -15,4 +15,4 @@ class Model_ACL_Role extends Model_Auth_Role {
 		'capabilities' => array('model' => 'capability'),
 	);
 
-} // End Model_ACL_Role
+}

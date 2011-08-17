@@ -19,4 +19,5 @@ class Model_ACL_Capability extends ORM {
 		'role' => array('model' => 'role')
 	);
 
-} // End Model_ACL_Capability
+}
+

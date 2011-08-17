@@ -524,4 +524,4 @@ class Synapse_ACL_Rule implements Serializable {
 		) = unserialize($serialized);
 	}
 
-} // End ACL Rule
+}

@@ -35,7 +35,7 @@ class Model_ACL_User extends Model_Auth_User {
 		}
 
 		// Get role object
-		if ( ! $role instanceof Model_Role)
+		if ( ! $role instanceof Model_ACL_Role)
 		{
 			$role = ORM::factory('role', array('name' => $role));
 		}
@@ -62,11 +62,11 @@ class Model_ACL_User extends Model_Auth_User {
 
 		// If the user has the super role, they can!
 		$super_role = Kohana::config('acl.super_role');
-		if ($super_role AND $user->is_a($super_role))
+		if ($super_role AND $this->is_a($super_role))
 			return TRUE;
 	
 		// Get capability object
-		if ( ! $capability instanceOf Model_Capability)
+		if ( ! $capability instanceof Model_ACL_Capability)
 		{
 			$capability = ORM::factory('capability', array('name' => $capability));
 		}
@@ -76,7 +76,7 @@ class Model_ACL_User extends Model_Auth_User {
 			throw new UnexpectedValueException('Tried to check for a capability that did not exist.');
 
 		// Return whether or not they have access
-		return (bool) $user->has('capabilities', $capability);
+		return (bool) $this->has('capabilities', $capability);
 	}
 
 	/**
@@ -121,7 +121,7 @@ class Model_ACL_User extends Model_Auth_User {
 	}
 
 	/**
-	 * Assigns a role (and associatted capabilities) to a User
+	 * Assigns a role (and associated capabilities) to a User
 	 *
 	 * @param   mixed  Role to assign
 	 * @return  Model_User
@@ -129,7 +129,7 @@ class Model_ACL_User extends Model_Auth_User {
 	public function add_role($role)
 	{
 		// Get role object
-		if ( ! $role instanceOf Model_Role)
+		if ( ! $role instanceof Model_ACL_Role)
 		{
 			$role = ORM::factory('role', array('name' => $role));
 		}
@@ -154,7 +154,7 @@ class Model_ACL_User extends Model_Auth_User {
 	}
 
 	/**
-	 * Removes a role (and associatted capabilities) from a User
+	 * Removes a role (and associated capabilities) from a User
 	 *
 	 * @param   mixed  Role to remove
 	 * @return  Model_User
@@ -162,7 +162,7 @@ class Model_ACL_User extends Model_Auth_User {
 	public function remove_role($role)
 	{
 		// Get role object
-		if ( ! $role instanceOf Model_Role)
+		if ( ! $role instanceof Model_ACL_Role)
 		{
 			$role = ORM::factory('role', array('name' => $role));
 		}
@@ -199,7 +199,7 @@ class Model_ACL_User extends Model_Auth_User {
 			throw new Synapse_ACL_Exception ('Capabilities are not supported in this configuration of the ACL module.');
 
 		// Get capability object
-		if ( ! $capability instanceOf Model_Capability)
+		if ( ! $capability instanceof Model_ACL_Capability)
 		{
 			$capability = ORM::factory('capability', array('name' => $capability));
 		}
@@ -235,7 +235,7 @@ class Model_ACL_User extends Model_Auth_User {
 			throw new Synapse_ACL_Exception ('Capabilities are not supported in this configuration of the ACL module.');
 
 		// Get capability object
-		if ( ! $capability instanceOf Model_Capability)
+		if ( ! $capability instanceof Model_ACL_Capability)
 		{
 			$capability = ORM::factory('capability', array('name' => $capability));
 		}
@@ -279,7 +279,7 @@ class Model_ACL_User extends Model_Auth_User {
 	/**
 	 * Retrieves a list of the names of the capabilities a user has
 	 *
-	 * @return  array  list of capabilties
+	 * @return  array  list of capabilities
 	 */
 	public function capabilities_list()
 	{
@@ -298,4 +298,4 @@ class Model_ACL_User extends Model_Auth_User {
 		return $capabilities;
 	}
 
-} // End Model_ACL_User
+}

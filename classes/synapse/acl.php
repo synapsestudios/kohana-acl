@@ -89,4 +89,4 @@ class Synapse_ACL {
 		}
 	}
 
-} // End ACL
+}
