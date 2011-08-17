@@ -35,7 +35,7 @@ class Model_ACL_User extends Model_Auth_User {
 		}
 
 		// Get role object
-		if ( ! $role instanceof Model_Role)
+		if ( ! $role instanceOf Model_Role)
 		{
 			$role = ORM::factory('role', array('name' => $role));
 		}
@@ -62,7 +62,7 @@ class Model_ACL_User extends Model_Auth_User {
 
 		// If the user has the super role, they can!
 		$super_role = Kohana::config('acl.super_role');
-		if ($super_role AND $user->is_a($super_role))
+		if ($super_role AND $this->is_a($super_role))
 			return TRUE;
 	
 		// Get capability object
@@ -76,7 +76,7 @@ class Model_ACL_User extends Model_Auth_User {
 			throw new UnexpectedValueException('Tried to check for a capability that did not exist.');
 
 		// Return whether or not they have access
-		return (bool) $user->has('capabilities', $capability);
+		return (bool) $this->has('capabilities', $capability);
 	}
 
 	/**
@@ -121,7 +121,7 @@ class Model_ACL_User extends Model_Auth_User {
 	}
 
 	/**
-	 * Assigns a role (and associatted capabilities) to a User
+	 * Assigns a role (and associated capabilities) to a User
 	 *
 	 * @param   mixed  Role to assign
 	 * @return  Model_User
@@ -154,7 +154,7 @@ class Model_ACL_User extends Model_Auth_User {
 	}
 
 	/**
-	 * Removes a role (and associatted capabilities) from a User
+	 * Removes a role (and associated capabilities) from a User
 	 *
 	 * @param   mixed  Role to remove
 	 * @return  Model_User
