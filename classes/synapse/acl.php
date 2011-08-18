@@ -39,7 +39,7 @@ class Synapse_ACL {
 	}
 
 	/**
-	 * Check if a user is allowed to the request based on the ACL rules
+	 * Checks if a user is authorized to execute the request based on the ACL rules
 	 *
 	 *     $rules = new ACL_Rule_list;
 	 *     $user = Auth::instance()->get_user();
@@ -60,13 +60,15 @@ class Synapse_ACL {
 	}
 
 	/**
-	 * This is the procedural method that executes ACL logic and responses
+	 * Checks if a user is authorized to execute the request based on the ACL rules.
+	 * Callbacks may be executed if authorization fails, and a 404 exception is thrown.
 	 *
+	 * @throws  HTTP_Exception_401 if user is not authorized
 	 * @param   Model_ACL_User  The user to authorize
 	 * @param   ACL_Request  The request to authorize the user for
 	 * @return  void
 	 */
-	public function authorize(Model_ACL_User $user, ACL_Request $request)
+	public function assert_authorized(Model_ACL_User $user, ACL_Request $request)
 	{
 		// Only run checks if the rule list has rules
 		if ($this->_rules->is_empty())
