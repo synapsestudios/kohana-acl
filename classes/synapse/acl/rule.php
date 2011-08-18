@@ -286,29 +286,6 @@ class Synapse_ACL_Rule implements Serializable {
 	}
 
 	/**
-	 * Does `allow_capability` based on a controller and action. Used in rule
-	 * compilation
-	 *
-	 * @chainable
-	 * @return  ACL_Rule
-	 */
-	protected function _resolve_capability()
-	{
-		// Only run this method if in auto mode and capabilities are supported
-		if ( ! $this->_auto_mode OR Kohana::config('acl.support_capabilities') === FALSE)
-			return $this;
-		
-		// Get capability associated with this request. Format: <action>_(<directory>_)<controller>
-		$directory_part = ( ! empty($this->_directory)) ? $this->_directory.'_' : '';
-		$capability_name = strtolower($this->_action.'_'.$directory_part.$this->_controller);
-
-		// Allow the capability
-		$this->allow_capability($capability_name);
-
-		return $this;
-	}
-
-	/**
 	 * Add a callback to be executed when the user is not authorized
 	 *
 	 * @chainable
@@ -392,20 +369,6 @@ class Synapse_ACL_Rule implements Serializable {
 		}
 
 		return $resolved;
-	}
-
-	/**
-	 * Determines if the rule is valid
-	 *
-	 * @return  boolean
-	 */
-	public function valid()
-	{
-		// If an action is defined, a controller must also be defined
-		if ($this->_action)
-			return (bool) $this->_controller;
-		
-		return TRUE;
 	}
 
 	/**
@@ -532,6 +495,29 @@ class Synapse_ACL_Rule implements Serializable {
 			$this->_action, $this->_specificity, $this->_callbacks,
 			$this->_roles, $this->_capabilities, $this->_users
 		) = unserialize($serialized);
+	}
+
+	/**
+	 * Does `allow_capability` based on a controller and action. Used in rule
+	 * compilation
+	 *
+	 * @chainable
+	 * @return  ACL_Rule
+	 */
+	protected function _resolve_capability()
+	{
+		// Only run this method if in auto mode and capabilities are supported
+		if ( ! $this->_auto_mode OR Kohana::config('acl.support_capabilities') === FALSE)
+			return $this;
+
+		// Get capability associated with this request. Format: <action>_(<directory>_)<controller>
+		$directory_part = ( ! empty($this->_directory)) ? $this->_directory.'_' : '';
+		$capability_name = strtolower($this->_action.'_'.$directory_part.$this->_controller);
+
+		// Allow the capability
+		$this->allow_capability($capability_name);
+
+		return $this;
 	}
 
 }

@@ -17,6 +17,55 @@ class Synapse_ACL_Rule_List implements Iterator, Countable, Serializable {
 	public static function from_array(array $array)
 	{
 		$rules = new ACL_Rule_List;
+
+		$paths = array(
+			'request.directory',
+			'request.controller',
+			'request.action',
+			'allow.all',
+			'allow.roles',
+			'allow.capabilities',
+			'allow.users',
+			'allow.auto',
+		);
+
+		foreach ($array as $item)
+		{
+			if ( ! is_array($item))
+				continue;
+
+			$rule = new ACL_Rule;
+
+			foreach ($paths as $path)
+			{
+				$data = Arr::path($item, $path, FALSE);
+				if ($data === FALSE)
+					continue;
+
+				list($prefix, $suffix) = explode('.', $path, 2);
+				$prefix = str_replace('request', 'for', $prefix);
+				$suffix = Inflector::singular($suffix);
+				$function = array($rule, $prefix.'_'.$suffix);
+				if (is_array($data))
+				{
+					call_user_func_array($function, $data);
+				}
+				else
+				{
+					call_user_func($function, $data);
+				}
+			}
+
+			foreach (Arr::get($item, 'callbacks', array()) as $role => $callback)
+			{
+				if ($function = Arr::get($callback, 'function'))
+				{
+					$args = Arr::get($callback, 'args', array());
+					$rule->add_callback($role, $function, $args);
+				}
+			}
+		}
+		
 		return $rules;
 	}
 
