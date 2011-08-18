@@ -1,6 +1,6 @@
 <?php defined('SYSPATH') or die('No direct script access.');
 /**
- * ACL Rule List library
+ * ACL Rule List
  *
  * @package    ACL
  * @author     Synapse Studios
@@ -14,6 +14,12 @@ class Synapse_ACL_Rule_List implements Iterator, Countable, Serializable {
 		return new ACL_Rule_List;
 	}
 
+	public static function from_array(array $array)
+	{
+		$rules = new ACL_Rule_List;
+		return $rules;
+	}
+
 	protected $_rules = array();
 
 	public function add(ACL_Rule $rule)
@@ -23,24 +29,18 @@ class Synapse_ACL_Rule_List implements Iterator, Countable, Serializable {
 		return $this;
 	}
 
-	public function from_array(array $array)
-	{
-		// @TODO
-		$this->_rules = $array;
-	}
-
 	/**
 	 * Compiles the rule from all applicable rules to this request
 	 *
 	 * @return  ACL_Rule  The compiled rule
 	 */
-	public function compile(Request $request)
+	public function compile(ACL_Request $request)
 	{
 		// Resolve and separate multi-action rules
 		$resolved_rules = array();
 		foreach ($this->_rules as $rule)
 		{
-			$resolved_rules = array_merge($resolved_rules, $rule->resolve($request));
+			$resolved_rules = array_merge($resolved_rules, $rule->resolve_for_request($request));
 		}
 
 		// Create a blank, base rule to compile down to
@@ -49,7 +49,7 @@ class Synapse_ACL_Rule_List implements Iterator, Countable, Serializable {
 		// Merge rules together that apply to this request
 		foreach ($resolved_rules as $rule)
 		{
-			if ($rule->valid() AND $rule->applies_to($request))
+			if ($rule->applies_to_request($request))
 			{
 				$compiled_rule = $compiled_rule->merge($rule);
 			}

@@ -1,6 +1,6 @@
 <?php defined('SYSPATH') or die('No direct access allowed.');
 /**
- * ACL library
+ * ACL
  *
  * @package    ACL
  * @author     Synapse Studios
@@ -47,26 +47,26 @@ class Synapse_ACL {
 	 *     $allowed = ACL::factory($rules)->is_authorized($user, $request);
 	 *
 	 * @param   Model_ACL_User  The user to authorize
-	 * @param   Request  The request to authorize the user for
+	 * @param   ACL_Request  The request to authorize the user for
 	 * @return  boolean
 	 */
-	public function is_authorized(Model_ACL_User $user, Request $request)
+	public function is_authorized(Model_ACL_User $user, ACL_Request $request)
 	{
 		// Compile the rules
 		$rule = $this->_rules->compile($request);
 
 		// Check if this user has access to this request
-		return $rule->allows_user($user);
+		return $rule->user_is_authorized($user);
 	}
 
 	/**
 	 * This is the procedural method that executes ACL logic and responses
 	 *
 	 * @param   Model_ACL_User  The user to authorize
-	 * @param   Request  The request to authorize the user for
+	 * @param   ACL_Request  The request to authorize the user for
 	 * @return  void
 	 */
-	public function authorize(Model_ACL_User $user, Request $request)
+	public function authorize(Model_ACL_User $user, ACL_Request $request)
 	{
 		// Only run checks if the rule list has rules
 		if ($this->_rules->is_empty())
@@ -76,7 +76,7 @@ class Synapse_ACL {
 		$rule = $this->_rules->compile($request);
 
 		// Check if this user has access to this request
-		if ( ! $rule->allows_user($user))
+		if ( ! $rule->user_is_authorized($user))
 		{
 			// Execute the callback (if any) from the compiled rule
 			if ($callback = $rule->callback_for_user($user))

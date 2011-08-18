@@ -8,13 +8,26 @@
  * @copyright  (c) 2010 Synapse Studios
  */
 class Model_ACL_User extends Model_Auth_User {
-	
+
+	protected $_roles_list = array();
+
+	protected $_capabilities_list = array();
+
+	protected $_auth = NULL;
+
 	protected $_has_many = array
 	(
 		'user_tokens'  => array('model' => 'user_token'),
 		'roles'        => array('model' => 'role', 'through' => 'roles_users'),
 		'capabilities' => array('model' => 'capability', 'through' => 'capabilities_users'),
 	);
+
+	public function __construct($id)
+	{
+		parent::__construct($id);
+
+		$this->_auth = Auth::instance();
+	}
 	
 	/**
 	 * Determines whether or not a user has (is) a particular role
@@ -257,23 +270,23 @@ class Model_ACL_User extends Model_Auth_User {
 	 */
 	public function roles_list()
 	{
-		// Create array of roles for this user
-		$roles = array();
-	
-		// See if the user is logged in or not
-		if ( ! Auth::instance()->logged_in())
+		if (empty($this->_roles_list))
 		{
-			$roles[] = Kohana::config('acl.public_role');
-			return $roles;
+			// See if the user is logged in or not
+			if ( ! $this->_auth->logged_in())
+			{
+				$roles[] = Kohana::config('acl.public_role');
+				return $roles;
+			}
+
+			// Get the name of all the user's roles
+			foreach ($this->roles->find_all() as $role)
+			{
+				$roles[] = $role->name;
+			}
 		}
 
-		// Get the name of all the user's roles
-		foreach ($this->roles->find_all() as $role)
-		{
-			$roles[] = $role->name;
-		}
-
-		return $roles;
+		return $this->_roles_list;
 	}
 
 	/**
@@ -283,19 +296,19 @@ class Model_ACL_User extends Model_Auth_User {
 	 */
 	public function capabilities_list()
 	{
-		// Create array of capabilities for the user
-		$capabilities = array();
-			
-		// Get the name of all the user's capabilities
-		if (Auth::instance()->logged_in() AND Kohana::config('acl.support_capabilities'))
+		if (empty($this->capabilities_list))
 		{
-			foreach ($this->capabilities->find_all() as $capability)
+			// Get the name of all the user's capabilities
+			if ($this->_auth->logged_in() AND Kohana::config('acl.support_capabilities'))
 			{
-				$capabilities[] = $capability->name;
+				foreach ($this->capabilities->find_all() as $capability)
+				{
+					$capabilities[] = $capability->name;
+				}
 			}
 		}
 
-		return $capabilities;
+		return $this->capabilities_list;
 	}
 
 }

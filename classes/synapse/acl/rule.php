@@ -1,6 +1,6 @@
 <?php defined('SYSPATH') or die('No direct access allowed.');
 /**
- * ACL Rule library
+ * ACL Rule
  *
  * @package    ACL
  * @author     Synapse Studios
@@ -181,7 +181,7 @@ class Synapse_ACL_Rule implements Serializable {
 		// Check for invalid roles
 		$invalid = array_values(array_diff($roles, ACL_Rule::valid_roles()));
 		if ( ! empty($invalid))
-			throw new Synapse_ACL_Exception('":role" is an invalid role, and cannot be added to an ACL rule.',
+			throw new ACL_Exception('":role" is an invalid role, and cannot be added to an ACL rule.',
 				array(':role' => $invalid[0]));
 
 		// Add these roles to the current set
@@ -201,7 +201,7 @@ class Synapse_ACL_Rule implements Serializable {
 	{
 		// Do not allow this method if capabilities are not supported
 		if (Kohana::config('acl.support_capabilities') === FALSE)
-			throw new Synapse_ACL_Exception('Capabilities are not supported in this configuration of the ACL module.');
+			throw new ACL_Exception('Capabilities are not supported in this configuration of the ACL module.');
 
 		// Allow for multiple capabilities
 		$capabilities = func_get_args();
@@ -209,7 +209,7 @@ class Synapse_ACL_Rule implements Serializable {
 		// Check for invalid capabilities
 		$invalid = array_diff($capabilities, ACL_Rule::valid_capabilities());
 		if ( ! empty($invalid))
-			throw new Synapse_ACL_Exception ('":capability" is an invalid role, and cannot be added to an ACL rule.',
+			throw new ACL_Exception ('":capability" is an invalid role, and cannot be added to an ACL rule.',
 				array(':capability' => $invalid[0]));
 		
 		// Add these capabilities to the current set
@@ -271,7 +271,7 @@ class Synapse_ACL_Rule implements Serializable {
 	{
 		// Do not allow this method if capabilities are not supported
 		if (Kohana::config('acl.support_capabilities') === FALSE)
-			throw new Synapse_ACL_Exception('Capabilities are not supported in this configuration of the ACL module.');
+			throw new ACL_Exception('Capabilities are not supported in this configuration of the ACL module.');
 
 		// Make sure the controller and action are set
 		if (empty($this->_action))
@@ -321,7 +321,7 @@ class Synapse_ACL_Rule implements Serializable {
 	{
 		// Check if the function is a valid callback
 		if ( ! is_callable($function))
-			throw new Synapse_ACL_Exception('An invalid callback was added to the ACL rule.');
+			throw new ACL_Exception('An invalid callback was added to the ACL rule.');
 		
 		// Add the callback to the callbacks list
 		$role = empty($role) ? ACL_Rule::DEFAULT_CALLBACK : $role;
@@ -362,7 +362,7 @@ class Synapse_ACL_Rule implements Serializable {
 	 * @param   Request  The current request
 	 * @return  array   An array of resolved rules
 	 */
-	public function resolve(Request $request)
+	public function resolve_for_request(ACL_Request $request)
 	{
 		// This will store all of the resolved rules created here
 		$resolved = array();
@@ -414,13 +414,23 @@ class Synapse_ACL_Rule implements Serializable {
 	 * @param   Request  The request for which to test the rule
 	 * @return  boolean
 	 */
-	public function applies_to(Request $request)
+	public function applies_to_request(ACL_Request $request)
 	{
-		$directory_matches = (empty($this->_directory) OR $request->directory() == $this->_directory);
-		$controller_matches = (empty($this->_controller) OR $request->controller() == $this->_controller);
-		$action_matches = (empty($this->_action) OR $request->action() == $this->_action);
+		// Make sure the rule is valid
+		if ($this->_action AND ! $this->_controller)
+			return FALSE;
 
-		return (bool) ($directory_matches AND $controller_matches AND $action_matches);
+		// Make sure the directory matches
+		if ($this->_directory AND $request->directory() != $this->_directory)
+			return FALSE;
+
+		// Make sure the controller matches
+		if ($this->_controller AND $request->controller() != $this->_controller)
+			return FALSE;
+
+		// Make sure the action matches
+		if ($this->_action AND $request->action() != $this->_action)
+			return FALSE;
 	}
 
 	/**
@@ -479,7 +489,7 @@ class Synapse_ACL_Rule implements Serializable {
 	 * @param   Model_ACL_User  The user that is being authorized
 	 * @return  boolean
 	 */
-	public function allows_user(Model_ACL_User $user)
+	public function user_is_authorized(Model_ACL_User $user)
 	{
 		// If the user has the super role, then allow access
 		$super_role = Kohana::config('acl.super_role');
