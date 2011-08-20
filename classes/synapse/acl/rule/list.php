@@ -16,36 +16,41 @@ class Synapse_ACL_Rule_List implements Iterator, Countable, Serializable {
 
 	public static function from_array(array $array)
 	{
+		// Begin the Rule List
 		$rules = new ACL_Rule_List;
 
+		// These are the valid array paths which we will look at
 		$paths = array(
-			'request.directory',
-			'request.controller',
-			'request.action',
+			'for.directory',
+			'for.controller',
+			'for.action',
 			'allow.all',
-			'allow.roles',
-			'allow.capabilities',
-			'allow.users',
+			'allow.role',
+			'allow.capability',
+			'allow.user',
 			'allow.auto',
 		);
 
+		// Create rules for each item in the array
 		foreach ($array as $item)
 		{
+			// Only proceed if the
 			if ( ! is_array($item))
 				continue;
 
+			// Begin the new rule
 			$rule = new ACL_Rule;
 
+			// Do all of the for_* and allow_* calls
 			foreach ($paths as $path)
 			{
+				// Make sure the path was defined
 				$data = Arr::path($item, $path, FALSE);
 				if ($data === FALSE)
 					continue;
 
-				list($prefix, $suffix) = explode('.', $path, 2);
-				$prefix = str_replace('request', 'for', $prefix);
-				$suffix = Inflector::singular($suffix);
-				$function = array($rule, $prefix.'_'.$suffix);
+				// Turn the path into a function call
+				$function = array($rule, str_replace('.', '_', $path));
 				if (is_array($data))
 				{
 					call_user_func_array($function, $data);
@@ -56,7 +61,9 @@ class Synapse_ACL_Rule_List implements Iterator, Countable, Serializable {
 				}
 			}
 
-			foreach (Arr::get($item, 'callbacks', array()) as $role => $callback)
+			// Now add any callbacks that were defined
+			$callbacks = (array) Arr::get($item, 'callbacks', array());
+			foreach ($callbacks as $role => $callback)
 			{
 				if ($function = Arr::get($callback, 'function'))
 				{
@@ -64,6 +71,9 @@ class Synapse_ACL_Rule_List implements Iterator, Countable, Serializable {
 					$rule->add_callback($role, $function, $args);
 				}
 			}
+
+			// Add the defined rule to the rule list
+			$rules->add($rule);
 		}
 		
 		return $rules;
