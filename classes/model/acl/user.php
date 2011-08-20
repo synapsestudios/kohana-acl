@@ -222,7 +222,7 @@ class Model_ACL_User extends Model_Auth_User {
 			throw new UnexpectedValueException('Tried to assign a capability that did not exist.');
 
 		// Capabilities can only be assigned when a user has the associated role
-		if (Kohana::config('acl.capabilties_limited_by_role'))
+		if (Kohana::config('acl.capabilities_limited_by_role'))
 		{
 			if ($capability->role_id !== NULL AND ! $this->has('roles', $capability->role))
 				throw new UnexpectedValueException('Tried to assign the :capability capability to a user without the required :role role.',
