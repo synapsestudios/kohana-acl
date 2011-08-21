@@ -13,25 +13,43 @@ class Synapse_ACL_Request
 	protected $_controller;
 	protected $_action;
 
-	public static function factory($action, $controller, $directory = NULL)
+	public static function factory($action = NULL, $controller = NULL, $directory = NULL)
 	{
-		return new ACL_Request($action, $controller, $directory);
-	}
-
-	public static function from_array(array $request)
-	{
-		$action = (string) Arr::get($request, 'action');
-		$controller = (string) Arr::get($request, 'controller');
-		$directory = (string) Arr::get($request, 'directory');
-
-		return new ACL_Request($action, $controller, $directory);
-	}
-
-	public static function from_request(Kohana_Request $request)
-	{
-		$action = $request->action();
-		$controller = $request->controller();
-		$directory = $request->directory();
+		if (is_array($action))
+		{
+			// Construct from request parameters array
+			$params = $action;
+			$action = (string) Arr::get($params, 'action');
+			$controller = (string) Arr::get($params, 'controller');
+			$directory = (string) Arr::get($params, 'directory');
+		}
+		elseif ($action instanceof Kohana_Request)
+		{
+			// Construct from a Request object
+			$request = $action;
+			$action = $request->action();
+			$controller = $request->controller();
+			$directory = $request->directory();
+		}
+		elseif (is_string($action) AND is_string($controller))
+		{
+			// Construct from request parameters
+			$action = (string) $action;
+			$controller = (string) $controller;
+			$directory = (string) $directory;
+		}
+		elseif ($action === NULL)
+		{
+			// Construct from the current Request object
+			$request = Request::current();
+			$action = $request->action();
+			$controller = $request->controller();
+			$directory = $request->directory();
+		}
+		else
+		{
+			throw new InvalidArgumentException('The ACL Request class requires either a Request object or request parameters to be created.');
+		}
 
 		return new ACL_Request($action, $controller, $directory);
 	}

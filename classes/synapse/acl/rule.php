@@ -19,7 +19,7 @@ class Synapse_ACL_Rule implements Serializable {
 		if (empty($roles))
 		{
 			// Add public pseudo-role to list
-			if ($public_role = Kohana::config('acl.public_role'))
+			if ($public_role = Kohana::$config->load('acl')->get('public_role'))
 			{
 				$roles[] = $public_role;
 			}
@@ -38,7 +38,7 @@ class Synapse_ACL_Rule implements Serializable {
 	{
 		static $capabilities = array();
 
-		if (empty($capabilities) AND Kohana::config('acl.support_capabilities'))
+		if (empty($capabilities) AND Kohana::$config->load('acl')->get('support_capabilities'))
 		{
 			foreach (ORM::factory('capability')->find_all() as $capability)
 			{
@@ -200,7 +200,7 @@ class Synapse_ACL_Rule implements Serializable {
 	public function allow_capability($capability)
 	{
 		// Do not allow this method if capabilities are not supported
-		if (Kohana::config('acl.support_capabilities') === FALSE)
+		if (Kohana::$config->load('acl')->get('support_capabilities') === FALSE)
 			throw new ACL_Exception('Capabilities are not supported in this configuration of the ACL module.');
 
 		// Allow for multiple capabilities
@@ -270,7 +270,7 @@ class Synapse_ACL_Rule implements Serializable {
 	public function allow_auto()
 	{
 		// Do not allow this method if capabilities are not supported
-		if (Kohana::config('acl.support_capabilities') === FALSE)
+		if (Kohana::$config->load('acl')->get('support_capabilities') === FALSE)
 			throw new ACL_Exception('Capabilities are not supported in this configuration of the ACL module.');
 
 		// Make sure the controller and action are set
@@ -455,7 +455,7 @@ class Synapse_ACL_Rule implements Serializable {
 	public function user_is_authorized(Model_ACL_User $user)
 	{
 		// If the user has the super role, then allow access
-		$super_role = Kohana::config('acl.super_role');
+		$super_role = Kohana::$config->load('acl')->get('super_role');
 		if ($super_role AND $user->is_a($super_role))
 			return TRUE;
 
@@ -507,7 +507,7 @@ class Synapse_ACL_Rule implements Serializable {
 	protected function _resolve_capability()
 	{
 		// Only run this method if in auto mode and capabilities are supported
-		if ( ! $this->_auto_mode OR Kohana::config('acl.support_capabilities') === FALSE)
+		if ( ! $this->_auto_mode OR Kohana::$config->load('acl')->get('support_capabilities') === FALSE)
 			return $this;
 
 		// Get capability associated with this request. Format: <action>_(<directory>_)<controller>

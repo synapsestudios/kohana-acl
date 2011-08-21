@@ -38,7 +38,7 @@ class Model_ACL_User extends Model_Auth_User {
 	public function is_a($role)
 	{
 		// Handle guests
-		if ($role === Kohana::config('acl.public_role'))
+		if ($role === Kohana::$config->load('acl')->get('public_role'))
 		{
 			$login_role = ORM::factory('role', array('name' => 'login'));
 			if ( ! $this->loaded() OR ! $this->has('roles', $login_role))
@@ -48,14 +48,19 @@ class Model_ACL_User extends Model_Auth_User {
 		}
 
 		// Get role object
-		if ( ! $role instanceof Model_ACL_Role)
+		if ($role instanceof Model_ACL_Role)
 		{
-			$role = ORM::factory('role', array('name' => $role));
+			$name = $role->name;
+		}
+		else
+		{
+			$name = $role;
+			$role = ORM::factory('role', array('name' => $name));
 		}
 		
 		// If object failed to load then throw exception
 		if ( ! $role->loaded())
-			throw new UnexpectedValueException('Tried to check for a role that did not exist.');
+			throw new UnexpectedValueException('Tried to check for the role, "'.$name.'", which did not exist.');
 
 		// Return whether or not they have the role
 		return (bool) $this->has('roles', $role);
@@ -70,23 +75,28 @@ class Model_ACL_User extends Model_Auth_User {
 	public function can($capability)
 	{
 		// Do not allow this method if capabilities are not supported
-		if (Kohana::config('acl.support_capabilities') === FALSE)
+		if (Kohana::$config->load('acl')->get('support_capabilities') === FALSE)
 			throw new Synapse_ACL_Exception ('Capabilities are not supported in this configuration of the ACL module.');
 
 		// If the user has the super role, they can!
-		$super_role = Kohana::config('acl.super_role');
+		$super_role = Kohana::$config->load('acl')->get('super_role');
 		if ($super_role AND $this->is_a($super_role))
 			return TRUE;
 	
 		// Get capability object
-		if ( ! $capability instanceof Model_ACL_Capability)
+		if ($capability instanceof Model_ACL_Capability)
 		{
-			$capability = ORM::factory('capability', array('name' => $capability));
+			$name = $capability->name;
+		}
+		else
+		{
+			$name = $capability;
+			$capability = ORM::factory('capability', array('name' => $name));
 		}
 		
 		// If object failed to load then throw exception
 		if ( ! $capability->loaded())
-			throw new UnexpectedValueException('Tried to check for a capability that did not exist.');
+			throw new UnexpectedValueException('Tried to check for the capability, "'.$name.'", which did not exist.');
 
 		// Return whether or not they have access
 		return (bool) $this->has('capabilities', $capability);
@@ -155,7 +165,7 @@ class Model_ACL_User extends Model_Auth_User {
 		$this->add('roles', $role);
 
 		// Add all of the capabilities associated with the role
-		if (Kohana::config('acl.support_capabilities') == TRUE)
+		if (Kohana::$config->load('acl')->get('support_capabilities') == TRUE)
 		{
 			foreach ($role->capabilities->find_all() as $capability)
 			{
@@ -185,7 +195,7 @@ class Model_ACL_User extends Model_Auth_User {
 			throw new UnexpectedValueException('Tried to remove a role that did not exist.');
 
 		// Remove all of the capabilities associated with the role
-		if (Kohana::config('acl.support_capabilities') == TRUE)
+		if (Kohana::$config->load('acl')->get('support_capabilities') == TRUE)
 		{
 			foreach ($role->capabilities->find_all() as $capability)
 			{
@@ -208,7 +218,7 @@ class Model_ACL_User extends Model_Auth_User {
 	public function add_capability($capability)
 	{
 		// Do not allow this method if capabilities are not supported
-		if (Kohana::config('acl.support_capabilities') === FALSE)
+		if (Kohana::$config->load('acl')->get('support_capabilities') === FALSE)
 			throw new Synapse_ACL_Exception ('Capabilities are not supported in this configuration of the ACL module.');
 
 		// Get capability object
@@ -222,7 +232,7 @@ class Model_ACL_User extends Model_Auth_User {
 			throw new UnexpectedValueException('Tried to assign a capability that did not exist.');
 
 		// Capabilities can only be assigned when a user has the associated role
-		if (Kohana::config('acl.capabilities_limited_by_role'))
+		if (Kohana::$config->load('acl')->get('capabilities_limited_by_role'))
 		{
 			if ($capability->role_id !== NULL AND ! $this->has('roles', $capability->role))
 				throw new UnexpectedValueException('Tried to assign the :capability capability to a user without the required :role role.',
@@ -244,7 +254,7 @@ class Model_ACL_User extends Model_Auth_User {
 	public function remove_capability($capability)
 	{
 		// Do not allow this method if capabilities are not supported
-		if (Kohana::config('acl.support_capabilities') === FALSE)
+		if (Kohana::$config->load('acl')->get('support_capabilities') === FALSE)
 			throw new Synapse_ACL_Exception ('Capabilities are not supported in this configuration of the ACL module.');
 
 		// Get capability object
@@ -275,14 +285,14 @@ class Model_ACL_User extends Model_Auth_User {
 			// See if the user is logged in or not
 			if ( ! $this->_auth->logged_in())
 			{
-				$roles[] = Kohana::config('acl.public_role');
-				return $roles;
+				$this->_roles_list[] = Kohana::$config->load('acl')->get('public_role');
+				return $this->_roles_list;
 			}
 
 			// Get the name of all the user's roles
 			foreach ($this->roles->find_all() as $role)
 			{
-				$roles[] = $role->name;
+				$this->_roles_list[] = $role->name;
 			}
 		}
 
@@ -296,19 +306,19 @@ class Model_ACL_User extends Model_Auth_User {
 	 */
 	public function capabilities_list()
 	{
-		if (empty($this->capabilities_list))
+		if (empty($this->_capabilities_list))
 		{
 			// Get the name of all the user's capabilities
-			if ($this->_auth->logged_in() AND Kohana::config('acl.support_capabilities'))
+			if ($this->_auth->logged_in() AND Kohana::$config->load('acl')->get('support_capabilities'))
 			{
 				foreach ($this->capabilities->find_all() as $capability)
 				{
-					$capabilities[] = $capability->name;
+					$this->_capabilities_list[] = $capability->name;
 				}
 			}
 		}
 
-		return $this->capabilities_list;
+		return $this->_capabilities_list;
 	}
 
 }

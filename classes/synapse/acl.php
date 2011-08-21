@@ -72,7 +72,7 @@ class Synapse_ACL {
 	{
 		// Only run checks if the rule list has rules
 		if ($this->_rules->is_empty())
-			return;
+			throw new ACL_Exception('No ACL rules were added to the ACL.');
 
 		// Compile the rules
 		$rule = $this->_rules->compile($request);
