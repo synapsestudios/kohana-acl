@@ -7,3 +7,8 @@
 - **Compatible Kohana Version(s):** 3.2.x
 
 **UNDER HEAVY DEVELOPMENT. DO NOT USE.**
+
+### TODO
+
+- Fix Config loading
+- Find out why authorization is not happening

@@ -93,13 +93,13 @@ class Synapse_ACL_Rule_List implements Iterator, Countable, Serializable {
 	 *
 	 * @return  ACL_Rule  The compiled rule
 	 */
-	public function compile(ACL_Request $request)
+	public function compile(array $params)
 	{
 		// Resolve and separate multi-action rules
 		$resolved_rules = array();
 		foreach ($this->_rules as $rule)
 		{
-			$resolved_rules = array_merge($resolved_rules, $rule->resolve_for_request($request));
+			$resolved_rules = array_merge($resolved_rules, $rule->resolve_for_request($params));
 		}
 
 		// Create a blank, base rule to compile down to
@@ -108,7 +108,7 @@ class Synapse_ACL_Rule_List implements Iterator, Countable, Serializable {
 		// Merge rules together that apply to this request
 		foreach ($resolved_rules as $rule)
 		{
-			if ($rule->applies_to_request($request))
+			if ($rule->applies_to_request($params))
 			{
 				$compiled_rule = $compiled_rule->merge($rule);
 			}

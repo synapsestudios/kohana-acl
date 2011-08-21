@@ -7,18 +7,30 @@
  * @author     Jeremy Lindblom <jeremy@synapsestudios.com>
  * @copyright  (c) 2010 Synapse Studios
  */
-class Synapse_ACL {
-
+class Synapse_ACL
+{
 	/**
 	 * Factory method for creating a chainable instance
 	 *
 	 * @chainable
 	 * @static
-	 * @return ACL
+	 * @return  ACL
 	 */
 	public static function factory(ACL_Rule_List $rules)
 	{
 		return new ACL($rules);
+	}
+
+	public static function config($key, $default = NULL)
+	{
+		static $config = array();
+
+		if (empty($config))
+		{
+			$config = Kohana::$config->load('acl')->as_array();
+		}
+
+		return Arr::get($config, $key, $default);
 	}
 
 	/**
@@ -32,16 +44,27 @@ class Synapse_ACL {
 	 * @param   Request  The request
 	 * @return  void
 	 */
-	protected function __construct(ACL_Rule_List $rules)
+	public function __construct(ACL_Rule_List $rules)
 	{
-		// The rules for ACL
 		$this->_rules = $rules;
+	}
+
+	public function set_rules(ACL_Rule_List $rules)
+	{
+		$this->_rules = $rules;
+
+		return $this;
+	}
+
+	public function get_rules()
+	{
+		return $this->_rules;
 	}
 
 	/**
 	 * Checks if a user is authorized to execute the request based on the ACL rules
 	 *
-	 *     $rules = new ACL_Rule_list;
+	 *     $rules = new ACL_Rule_List;
 	 *     $user = Auth::instance()->get_user();
 	 *     $request = Request::factory('account/upgrade');
 	 *     $allowed = ACL::factory($rules)->is_authorized($user, $request);
@@ -50,10 +73,13 @@ class Synapse_ACL {
 	 * @param   ACL_Request  The request to authorize the user for
 	 * @return  boolean
 	 */
-	public function is_authorized(Model_ACL_User $user, ACL_Request $request)
+	public function is_authorized(Model_ACL_User $user, $params = NULL)
 	{
+		// Prepare request params for checking
+		$params = $this->_prepare_params($params);
+
 		// Compile the rules
-		$rule = $this->_rules->compile($request);
+		$rule = $this->_rules->compile($params);
 
 		// Check if this user has access to this request
 		return $rule->user_is_authorized($user);
@@ -68,14 +94,17 @@ class Synapse_ACL {
 	 * @param   ACL_Request  The request to authorize the user for
 	 * @return  void
 	 */
-	public function assert_authorized(Model_ACL_User $user, ACL_Request $request)
+	public function assert_authorized(Model_ACL_User $user, $params)
 	{
 		// Only run checks if the rule list has rules
 		if ($this->_rules->is_empty())
 			throw new ACL_Exception('No ACL rules were added to the ACL.');
 
+		// Prepare request params for checking
+		$params = $this->_prepare_params($params);
+
 		// Compile the rules
-		$rule = $this->_rules->compile($request);
+		$rule = $this->_rules->compile($params);
 
 		// Check if this user has access to this request
 		if ( ! $rule->user_is_authorized($user))
@@ -91,4 +120,45 @@ class Synapse_ACL {
 		}
 	}
 
+	protected function _prepare_params($input = NULL)
+	{
+		$request = NULL;
+		$params = NULL;
+
+		if (is_array($input))
+		{
+			// Fetch from request parameters array
+			$params = Arr::extract($input, array('action', 'controller', 'directory'));
+		}
+		elseif ($input instanceof Request)
+		{
+			// Fetch from a Request object
+			$request = $input;
+		}
+		elseif (is_string($input) AND strpos($input, '/') !== FALSE)
+		{
+			// Fetch from URL
+			$request = Request::factory($input);
+		}
+		elseif ($input === NULL)
+		{
+			// Fetch from the current Request object
+			$request = Request::current();
+		}
+		else
+		{
+			throw new ACL_Exception('ACL request params could not be determined from the provided arguments.');
+		}
+
+		if ($request instanceof Request)
+		{
+			$params = array(
+				'action'     => $request->action(),
+				'controller' => $request->controller(),
+				'directory'  => $request->directory(),
+			);
+		}
+
+		return $params;
+	}
 }
