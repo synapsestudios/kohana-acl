@@ -92,7 +92,7 @@ class Synapse_ACL
 	 * @throws  HTTP_Exception_401 if user is not authorized
 	 * @param   Model_ACL_User  The user to authorize
 	 * @param   ACL_Request  The request to authorize the user for
-	 * @return  void
+	 * @return  ACL
 	 */
 	public function assert_authorized(Model_ACL_User $user, $params)
 	{
@@ -116,8 +116,10 @@ class Synapse_ACL
 			}
 
 			// Throw a 401 exception (if the callback has altered program flow
-			throw new HTTP_Exception_401;
+			throw new HTTP_Exception_401('The current user is not authorized to access the requested URL.');
 		}
+
+		return $this;
 	}
 
 	protected function _prepare_params($input = NULL)

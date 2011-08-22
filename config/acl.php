@@ -34,7 +34,7 @@ return array(
 	 * access to certain actions.
 	 */
 	'rules' => array(
-		array(
+		'welcome' => array(
 			'for' => array('controller' => 'welcome'),
 			'allow' => array('all' => TRUE),
 		),

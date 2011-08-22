@@ -390,6 +390,8 @@ class Synapse_ACL_Rule implements Serializable {
 		// Make sure the action matches
 		if ($this->_action AND Arr::get($params, 'action') != $this->_action)
 			return FALSE;
+
+		return TRUE;
 	}
 
 	/**
