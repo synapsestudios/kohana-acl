@@ -49,16 +49,23 @@ class Synapse_ACL
 		$this->_rules = $rules;
 	}
 
-	public function set_rules(ACL_Rule_List $rules)
+	/**
+	 * Rules setter/getter
+	 *
+	 * @param   ACL_Rule_List  The rules list to set
+	 * @return  ACL_Rule_List
+	 */
+	public function rules(ACL_Rule_List $rules = NULL)
 	{
-		$this->_rules = $rules;
-
-		return $this;
-	}
-
-	public function get_rules()
-	{
-		return $this->_rules;
+		if ($rules === NULL)
+		{
+			return $this->_rules;
+		}
+		else
+		{
+			$this->_rules = $rules;
+			return $this;
+		}
 	}
 
 	/**
@@ -122,6 +129,13 @@ class Synapse_ACL
 		return $this;
 	}
 
+	/**
+	 * Creates are an array of request parameters from various types of input
+	 *
+	 * @throws  ACL_Exception
+	 * @param   mixed  A Request, array, or string to convert to params
+	 * @return  array
+	 */
 	protected function _prepare_params($input = NULL)
 	{
 		$request = NULL;

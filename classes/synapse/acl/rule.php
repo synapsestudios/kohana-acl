@@ -12,6 +12,11 @@ class Synapse_ACL_Rule implements Serializable {
 	const DEFAULT_CALLBACK = '{DEFAULT}';
 	const CURRENT_ACTION = '{CURRENT}';
 
+	/**
+	 * Returns an array of valid ruoles that can be referenced
+	 *
+	 * @return  array  An array of roles available
+	 */
 	public static function valid_roles()
 	{
 		static $roles = array();
@@ -34,7 +39,12 @@ class Synapse_ACL_Rule implements Serializable {
 		return $roles;
 	}
 
-	public static function valid_capabilities()
+	/**
+		 * Returns an array of valid capabilities that can be referenced
+		 *
+		 * @return  array  An array of capabilities available
+		 */
+		public static function valid_capabilities()
 	{
 		static $capabilities = array();
 
@@ -333,7 +343,7 @@ class Synapse_ACL_Rule implements Serializable {
 	 * Resolves a rule into one or more complete rules before authorization.
 	 *
 	 * @param   Request  The current request
-	 * @return  array   An array of resolved rules
+	 * @return  array    An array of resolved rules
 	 */
 	public function resolve_for_request(array $params)
 	{
@@ -477,6 +487,11 @@ class Synapse_ACL_Rule implements Serializable {
 		return FALSE;
 	}
 
+	/**
+	 * Serializes the Rule
+	 *
+	 * @return  string  Serialized string representing the rule
+	 */
 	public function serialize()
 	{
 		return serialize(array(
@@ -486,6 +501,12 @@ class Synapse_ACL_Rule implements Serializable {
 		));
 	}
 
+	/**
+	 * Unserializes a serialized rue
+	 *
+	 * @param   string  Serialized rule
+	 * @return  void
+	 */
 	public function unserialize($serialized)
 	{
 		list($this->_auto_mode, $this->_directory, $this->_controller,
