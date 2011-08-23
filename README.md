@@ -6,6 +6,8 @@
 - **Module URL:** <http://github.com/synapsestudios/kohana-acl>
 - **Compatible Kohana Version(s):** 3.2.x
 
+**Disclaimer:** Complete, but not fully tested.
+
 ## Description
 
 The ACL module for Kohana `3.2.x` builds upon and extends the Auth module to add
