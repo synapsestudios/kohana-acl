@@ -13,21 +13,12 @@ class Model_ACL_User extends Model_Auth_User {
 
 	protected $_capabilities_list = array();
 
-	protected $_auth = NULL;
-
 	protected $_has_many = array(
 		'user_tokens'  => array('model' => 'user_token'),
 		'roles'        => array('model' => 'role', 'through' => 'roles_users'),
 		'capabilities' => array('model' => 'capability', 'through' => 'capabilities_users'),
 	);
 
-	public function __construct($id)
-	{
-		parent::__construct($id);
-
-		$this->_auth = Auth::instance();
-	}
-	
 	/**
 	 * Determines whether or not a user has (is) a particular role
 	 *
@@ -281,7 +272,7 @@ class Model_ACL_User extends Model_Auth_User {
 		if (empty($this->_roles_list))
 		{
 			// See if the user is logged in or not
-			if ( ! $this->_auth->logged_in())
+			if ( ! Auth::instance()->logged_in())
 			{
 				$this->_roles_list[] = ACL::config('public_role');
 				return $this->_roles_list;
@@ -307,7 +298,7 @@ class Model_ACL_User extends Model_Auth_User {
 		if (empty($this->_capabilities_list))
 		{
 			// Get the name of all the user's capabilities
-			if ($this->_auth->logged_in() AND ACL::config('support_capabilities'))
+			if (Auth::instance()->logged_in() AND ACL::config('support_capabilities'))
 			{
 				foreach ($this->capabilities->find_all() as $capability)
 				{
