@@ -83,7 +83,19 @@ ACL** section below.
 				$rules = ACL_Rule_List::factory()
 					->add(ACL_Rule::factory()
 						->for_controller('welcome')
-						->allow_all());
+						->allow_all())
+					->add(ACL_Rule::factory()
+						->for_controller('article')
+						->for_action('read')
+						->allow_all())
+					->add(ACL_Rule::factory()
+						->for_controller('article')
+						->for_action('create', 'update', 'preview')
+						->allow_role('author', 'editor'))
+					->add(ACL_Rule::factory()
+						->for_controller('article')
+						->for_action('publish', 'delete')
+						->allow_role('editor'));
 
 				$cache->set('acl-rules-list', $rules, Date::MONTH);
 			}
