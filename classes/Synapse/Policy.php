@@ -56,7 +56,7 @@
  * @copyright (c) 2010-2011 Jeremy Bush
  * @license   ISC License http://github.com/zombor/Vendo/raw/master/LICENSE
  */
-abstract class Vendo_Policy
+abstract class Synapse_Policy
 {
 	const GENERAL_FAILURE = 0;
 
