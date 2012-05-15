@@ -1,3 +1,3 @@
 <?php defined('SYSPATH') OR die('No direct access allowed.');
 
-class ACL extends Synapse_ACL {}
+class Policy_Exception extends Vendo_Policy_Exception {}
