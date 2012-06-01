@@ -62,6 +62,9 @@ abstract class Synapse_Policy
 
 	static $last_code;
 
+	protected $_auth;
+	protected $_request;
+
 	/**
 	 * Factory method to return a specific policy
 	 * 
@@ -77,14 +80,17 @@ abstract class Synapse_Policy
 		return new $class();
 	}
 
-	/**
-	 * Method to execute a policy
-	 * 
-	 * @param Model_ACL_User $user  the user account to run the policy on
-	 * @param array          $extra an array of extra parameters that this
-	 *                              policy can use
-	 *
-	 * @return bool/int
-	 */
-	abstract public function execute(Model_ACL_User $user, array $extra = NULL);
+	public function auth(Model_ACL_User $user)
+	{
+		$this->_auth = $user;
+
+		return $this;
+	}
+
+	public function request(Request $request)
+	{
+		$this->_request = $request;
+
+		return $this;
+	}
 }
