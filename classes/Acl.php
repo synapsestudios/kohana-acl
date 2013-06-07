@@ -28,14 +28,21 @@ class Acl implements Heroine\HeroineAwareInterface {
 		};
 	}
 
+	/**
+	 * From Heroine's interface
+	 * @param Heroine\Heroine $heroine
+	 */
 	public function setHeroine(Heroine\Heroine $heroine)
 	{
 		$this->_heroine = $heroine;
 	}
 
+	/**
+	 * To match Kohana's coding standards
+	 */
 	public function set_heroine(Heroine\Heroine $heroine)
 	{
-		$this->setHeroine($heroine);
+		return $this->setHeroine($heroine);
 	}
 
 	public function getHeroine()
@@ -43,6 +50,9 @@ class Acl implements Heroine\HeroineAwareInterface {
 		return $this->_heroine;
 	}
 
+	/**
+	 * Match Kohana's coding standards
+	 */
 	public function get_heroine()
 	{
 		return $this->getHeroine();
