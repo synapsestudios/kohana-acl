@@ -1,0 +1,12 @@
+{
+    "name": "synapsestudios/kohana-acl",
+    "require": {
+        "zendframework/zend-permissions-acl": "~2.2"
+    },
+    "authors": [
+        {
+            "name": "Ben Youngblood",
+            "email": "ben@synapsestudios.com"
+        }
+    ]
+}
