@@ -8,7 +8,7 @@ class Acl_Resource extends ResourceInterface {
 
 	public function getResourceId()
 	{
-
+		return $this->_resource_id;
 	}
 
 	public function get_resource_id()
