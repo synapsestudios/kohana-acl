@@ -33,6 +33,21 @@ class Acl implements Heroine\HeroineAwareInterface {
 		$this->_heroine = $heroine;
 	}
 
+	public function set_heroine(Heroine\Heroine $heroine)
+	{
+		$this->setHeroine($heroine);
+	}
+
+	public function getHeroine()
+	{
+		return $this->_heroine;
+	}
+
+	public function get_heroine()
+	{
+		return $this->getHeroine();
+	}
+
 	public function add_role_provider(Acl_Role_ProviderInterface $provider)
 	{
 		$this->_loaded AND $this->_loaded->__invoke();

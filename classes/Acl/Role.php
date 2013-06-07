@@ -19,9 +19,14 @@ class Acl_Role implements RoleInterface {
 		}
 	}
 
-	public function get_role_id()
+	public function getRoleId()
 	{
 		return $this->_role_id;
+	}
+
+	public function get_role_id()
+	{
+		return $this->getRoleId();
 	}
 
 	public function set_role_id($role_id)
