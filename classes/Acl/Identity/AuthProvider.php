@@ -3,7 +3,7 @@
 /**
  * Assumes that your user model returned from Kohana Auth has a get_role() method
  */
-class AuthProvider implements Acl_Identity_ProviderInterface {
+class Acl_Identity_AuthProvider implements Acl_Identity_ProviderInterface {
 
 	protected $_default_role = 'guest';
 
