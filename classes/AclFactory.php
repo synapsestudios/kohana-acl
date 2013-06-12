@@ -1,6 +1,6 @@
 <?php
 
-class AclFactory implements Heroine\FactoryInterface
+class AclFactory implements Heroine\Factory\FactoryInterface
 {
 	public function createService(Heroine\Heroine $heroine, $service)
 	{

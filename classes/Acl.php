@@ -19,9 +19,13 @@ class Acl implements Heroine\HeroineAwareInterface {
 
 	protected $_heroine;
 
-	public function __construct($config)
+	protected $_config;
+
+	public function __construct($config = array())
 	{
-		$that         = $this;
+		$this->_config = $config;
+
+		$that          = $this;
 		$this->_loaded = function() use ($that)
 		{
 			$that->load();
@@ -60,40 +64,30 @@ class Acl implements Heroine\HeroineAwareInterface {
 
 	public function add_role_provider(Acl_Role_ProviderInterface $provider)
 	{
-		$this->_loaded AND $this->_loaded->__invoke();
-		$this->role_providers[] = $provider;
-
+		$this->_role_providers[] = $provider;
 		return $this;
 	}
 
 	public function add_resource_provider(Acl_Resource_ProviderInterface $provider)
 	{
-		$this->_loaded AND $this->_loaded->__invoke();
 		$this->_resource_providers[] = $provider;
-
 		return $this;
 	}
 
 	public function add_rule_provider(Acl_Rule_ProviderInterface $provider)
 	{
-		$this->_loaded AND $this->_loaded->__invoke();
-		$this->_rule_providers = $provider;
-
+		$this->_rule_providers[] = $provider;
 		return $this;
 	}
 
 	public function set_identity_provider(Acl_Identity_ProviderInterface $provider)
 	{
-		$this->_loaded AND $this->_loaded->__invoke();
 		$this->_identity_provider = $provider;
-
 		return $this;
 	}
 
 	public function get_identity()
 	{
-		$this->_loaded AND $this->_loaded->__invoke();
-
 		return 'user-acl-identity';
 	}
 
@@ -103,7 +97,7 @@ class Acl implements Heroine\HeroineAwareInterface {
 
 		try
 		{
-			return $this->acl->isAllowed($this->get_identity(), $resource, $privilege);
+			return $this->_acl->isAllowed($this->get_identity(), $resource, $privilege);
 		}
 		catch (InvalidArgumentException $e)
 		{
@@ -124,24 +118,22 @@ class Acl implements Heroine\HeroineAwareInterface {
 			return;
 
 		$this->_loaded = NULL;
-		$this->_acl    = new Zend\Permissions\Acl;
+		$this->_acl    = new Zend\Permissions\Acl\Acl;
 
-		foreach ($this->_heroine->get('Acl_RoleProviders') as $provider)
+		foreach ((array) $this->_config['role_providers'] as $provider)
 		{
 			$this->add_role_provider($provider);
 		}
 
-		foreach ($this->_heroine->get('Acl_ResourceProviders') as $provider)
+		foreach ((array) $this->_config['resource_providers'] as $provider)
 		{
 			$this->add_resource_provider($provider);
 		}
 
-		foreach ($this->_heroine->get('Acl_RuleProviders') as $provider)
+		foreach ((array) $this->_config['rule_providers'] as $provider)
 		{
 			$this->add_rule_provider($provider);
 		}
-
-		$this->set_identity_provider($this->_heroine->get('Acl_IdentityProvider'));
 
 		foreach ($this->_role_providers as $provider)
 		{
@@ -173,10 +165,12 @@ class Acl implements Heroine\HeroineAwareInterface {
 			}
 		}
 
-		$parent_roles = $this->get_identity_provider()
+		$this->set_identity_provider($this->_heroine->get('Acl_IdentityProvider'));
+
+		$parent_roles = $this->_identity_provider
 			->get_identity_roles();
 
-		$this->_acl->addRole($this->_get_identity(), $parent_roles);
+		$this->_acl->addRole($this->get_identity(), $parent_roles);
 	}
 
 	protected function _add_roles($roles)
@@ -191,10 +185,10 @@ class Acl implements Heroine\HeroineAwareInterface {
 			if ($this->_acl->hasRole($role))
 				continue;
 
-			if ($role->getParent() !== NULL)
+			if ($role->get_parent() !== NULL)
 			{
-				$this->_add_roles(array($role->getParent()));
-				$this->_acl->addRole($role, $role->getParent());
+				$this->_add_roles(array($role->get_parent()));
+				$this->_acl->addRole($role, $role->get_parent());
 			}
 			else if ( ! $this->_acl->hasRole($role))
 			{
@@ -203,7 +197,7 @@ class Acl implements Heroine\HeroineAwareInterface {
 		}
 	}
 
-	protected function _add_resource(array $resources, $parent = NULL)
+	protected function _add_resources(array $resources, $parent = NULL)
 	{
 		foreach ($resources as $key => $value)
 		{
